@@ -1,11 +1,14 @@
 // colors.js
+// colors.js
 export default {
     WhiteBackground: "#FFFFFF",
-    HeadingColor: "#1E293B",
-    MiniTitle: "#FF5400",
-    
-
-}; 
+    HeadingColor: "#1E293B", // Dark text
+    Primary: "#FF5400",       // The Mume Orange
+    SecondaryText: "#94A3B8", // Light Grey for artists/duration
+    Black: "#0F172A",         // Darkest Black
+    LightGray: "#F1F5F9",     // Background placeholder
+    Separator: "#E2E8F0"      // Light line colors
+};
 // &nbsp space 
 // {"\n"} line space
 // Opacity	Hex
