@@ -5,7 +5,7 @@ import colors from '../../Styles/colors'
 import { scale, verticalScale, textScale, width } from '../../Styles/StyleConfig'
 
 const AlbamListSection = ({ data }) => {
-  
+    console.log(data,"Albam ka data")
   const getImageUrl = (images) => {
     if (!images || images.length === 0) return 'https://via.placeholder.com/150';
     const imgObj = images.find(img => img.quality === '500x500') || images[images.length - 1];

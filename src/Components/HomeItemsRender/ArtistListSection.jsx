@@ -5,7 +5,7 @@ import colors from '../../Styles/colors'
 import { scale, verticalScale, moderateScale, textScale } from '../../Styles/StyleConfig'
 
 const ArtistListSection = ({ data }) => {
-  
+    console.log(data,"Artist data")
   const getImageUrl = (images) => {
     if (!images || images.length === 0) return 'https://via.placeholder.com/150';
     return images[images.length - 1]?.url;

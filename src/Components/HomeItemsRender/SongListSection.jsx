@@ -1,59 +1,48 @@
 import { StyleSheet, Text, View, FlatList, Image, TouchableOpacity } from 'react-native'
-import React from 'react'
-import Ionicons from '@react-native-vector-icons/ionicons';
+import React, { useState } from 'react' // Import useState
+import Ionicons from '@react-native-vector-icons/ionicons'
 import colors from '../../Styles/colors'
 import { scale, verticalScale, moderateScale, textScale } from '../../Styles/StyleConfig'
 
-// Import Hooks
+// Track Player Imports
 import TrackPlayer, { useActiveTrack, useIsPlaying } from 'react-native-track-player';
+
+// NEW: IMPORT MODAL
+import SongDetailsModal from '../../Components/Modal/SongDetailsModal';
 
 const SongListSection = ({ data }) => {
   
-  // Track Player Hooks
-  const activeTrack = useActiveTrack(); 
-  const { playing } = useIsPlaying();   
+  const activeTrack = useActiveTrack();
+  const { playing } = useIsPlaying();
+  
+  // -- STATES FOR MODAL --
+  const [modalVisible, setModalVisible] = useState(false);
+  const [selectedSong, setSelectedSong] = useState(null);
 
-  // 1. IMAGE URL HELPER
+  // --- HELPERS (Same as before) ---
   const getImageUrl = (images) => {
     if (!images || images.length === 0) return 'https://via.placeholder.com/150';
-    const imgObj = images.find(img => img.quality === '500x500') || images[images.length - 1];
-    return imgObj?.url;
+    return images.find(img => img.quality === '500x500')?.url || images[images.length - 1]?.url;
   };
 
-  // 2. AUDIO URL HELPER (Extract last item from downloadUrl array)
-  const getAudioUrl = (item) => {
-    if (!item?.downloadUrl || item.downloadUrl.length === 0) return null;
-    return item.downloadUrl[item.downloadUrl.length - 1]?.url;
-  };
+  const getAudioUrl = (item) => item?.downloadUrl?.[item.downloadUrl.length - 1]?.url;
 
-  // 3. SUBTITLE HELPER
   const getSubtitle = (item) => {
     const artistNames = item?.artists?.primary?.map(a => a.name).join(', ') || item.artist || "Unknown";
     const duration = item.duration ? `${Math.floor(item.duration / 60)}:${(item.duration % 60).toString().padStart(2, '0')}` : "03:00";
     return `${artistNames}  |  ${duration} mins`;
   };
 
-  // 4. MAIN PLAY LOGIC
+  // --- PLAY/PAUSE LOGIC (Direct on Song Row) ---
   const handlePlayPause = async (item) => {
       const trackUrl = getAudioUrl(item);
-      
-      if (!trackUrl) {
-          console.log("No audio URL found");
-          return;
-      }
+      if (!trackUrl) return;
 
-      // Check: Is this song already playing?
       if (activeTrack?.id === item.id) {
-          if (playing) {
-              await TrackPlayer.pause();
-          } else {
-              await TrackPlayer.play();
-          }
-      } 
-      // Play NEW Song
-      else {
+          playing ? await TrackPlayer.pause() : await TrackPlayer.play();
+      } else {
           try {
-            await TrackPlayer.reset(); 
+            await TrackPlayer.reset();
             await TrackPlayer.add({
                 id: item.id,
                 url: trackUrl,
@@ -62,10 +51,43 @@ const SongListSection = ({ data }) => {
                 artwork: getImageUrl(item.image),
             });
             await TrackPlayer.play();
-          } catch (error) {
-            console.log("Error playing track:", error);
-          }
+          } catch(e) { console.log(e); }
       }
+  };
+
+  // --- LOGIC: HANDLE "PLAY NEXT" from Modal ---
+  // Simple logic: insert song at next index
+  const handlePlayNext = async (songItem) => {
+      const trackUrl = getAudioUrl(songItem);
+      if(!trackUrl) return;
+      
+      const newTrack = {
+        id: songItem.id,
+        url: trackUrl,
+        title: songItem.name,
+        artist: songItem.artists?.primary?.[0]?.name || "Unknown",
+        artwork: getImageUrl(songItem.image),
+      };
+
+      try {
+        // Current index ke baad insert karo
+        const currentIndex = await TrackPlayer.getActiveTrackIndex();
+        if (currentIndex !== undefined) {
+            await TrackPlayer.add(newTrack, currentIndex + 1);
+            console.log("Added to Play Next:", songItem.name);
+        } else {
+            // Agar kuch play nahi ho raha to directly play kar do
+            handlePlayPause(songItem);
+        }
+      } catch (error) {
+          console.log("Error in Play Next", error);
+      }
+  };
+
+  // --- OPEN MODAL HANDLER ---
+  const openDetails = (item) => {
+      setSelectedSong(item); // Song ka data set kiya
+      setModalVisible(true); // Modal dikhaya
   };
 
   const renderItem = ({ item }) => {
@@ -75,24 +97,30 @@ const SongListSection = ({ data }) => {
     return (
       <View style={[styles.songRow, isActive && { backgroundColor: '#F3F4F6', borderRadius: 12 }]}>
          
-         <Image source={{ uri: getImageUrl(item.image) }} style={styles.songRowImage} />
-         
-         <View style={styles.songRowText}>
-             <Text 
-                style={[styles.rowTitle, isActive && { color: colors.Primary }]} 
-                numberOfLines={1}
-             >
-                 {item.name}
-             </Text>
-             <Text style={styles.rowSub} numberOfLines={1}>{getSubtitle(item)}</Text>
-         </View>
+         {/* Row Click -> Plays Music (Optional) */}
+         <TouchableOpacity 
+            style={{ flexDirection: 'row', flex: 1, alignItems: 'center' }}
+            onPress={() => handlePlayPause(item)} 
+         >
+            <Image source={{ uri: getImageUrl(item.image) }} style={styles.songRowImage} />
+            
+            <View style={styles.songRowText}>
+                <Text style={[styles.rowTitle, isActive && { color: colors.Primary }]} numberOfLines={1}>{item.name}</Text>
+                <Text style={styles.rowSub} numberOfLines={1}>{getSubtitle(item)}</Text>
+            </View>
+         </TouchableOpacity>
 
+         {/* Actions Area */}
          <View style={styles.songActions}>
               <TouchableOpacity onPress={() => handlePlayPause(item)}>
                   <Ionicons name={iconName} size={32} color={colors.Primary} />
               </TouchableOpacity>
               
-              <TouchableOpacity style={{ marginLeft: scale(10) }}>
+              {/* Three Dots -> Opens DETAILS MODAL */}
+              <TouchableOpacity 
+                 style={{ marginLeft: scale(15), padding: 5 }} 
+                 onPress={() => openDetails(item)}
+              >
                   <Ionicons name="ellipsis-vertical" size={20} color={colors.SecondaryText} />
               </TouchableOpacity>
          </View>
@@ -101,13 +129,23 @@ const SongListSection = ({ data }) => {
   };
 
   return (
-    <FlatList
-        data={data}
-        renderItem={renderItem}
-        keyExtractor={item => item.id.toString()}
-        contentContainerStyle={styles.listContent}
-        showsVerticalScrollIndicator={false}
-    />
+    <>
+        <FlatList
+            data={data}
+            renderItem={renderItem}
+            keyExtractor={item => item.id.toString()}
+            contentContainerStyle={styles.listContent}
+            showsVerticalScrollIndicator={false}
+        />
+
+        {/* MODAL CALL (Screen ke neeche mounted hai) */}
+        <SongDetailsModal 
+            visible={modalVisible}
+            song={selectedSong}
+            onClose={() => setModalVisible(false)}
+            onPlayNext={handlePlayNext}
+        />
+    </>
   )
 }
 
