@@ -10,10 +10,20 @@
     "test": "jest"
   },
   "dependencies": {
+    "@react-native-async-storage/async-storage": "^2.2.0",
+    "@react-native-vector-icons/ionicons": "^12.3.0",
+    "@react-native/new-app-screen": "0.84.0",
+    "@react-navigation/bottom-tabs": "^7.14.0",
+    "@react-navigation/native": "^7.1.28",
+    "@react-navigation/stack": "^7.7.2",
+    "axios": "^1.13.5",
     "react": "19.2.3",
     "react-native": "0.84.0",
-    "@react-native/new-app-screen": "0.84.0",
-    "react-native-safe-area-context": "^5.5.2"
+    "react-native-gesture-handler": "^2.30.0",
+    "react-native-reanimated": "^4.2.2",
+    "react-native-safe-area-context": "^5.6.2",
+    "react-native-screens": "^4.23.0",
+    "react-native-worklets": "^0.7.4"
   },
   "devDependencies": {
     "@babel/core": "^7.25.2",
@@ -37,5 +47,6 @@
   },
   "engines": {
     "node": ">= 22.11.0"
-  }
+  },
+  "packageManager": "yarn@4.5.1+sha512.341db9396b6e289fecc30cd7ab3af65060e05ebff4b3b47547b278b9e67b08f485ecd8c79006b405446262142c7a38154445ef7f17c1d5d1de7d90bf9ce7054d"
 }
