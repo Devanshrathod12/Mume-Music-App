@@ -20,7 +20,7 @@ import SortModal from '../Components/Modal/SortModal';
 const Home = () => {
     const insets = useSafeAreaInsets();
 
-    // Tabs State
+    // Tabs State 
     const [activeTab, setActiveTab] = useState('Suggested');
     const tabs = ["Suggested", "Songs", "Artists", "Albums"];
 
@@ -42,10 +42,32 @@ const Home = () => {
         fetchData();
     }, [activeTab]);
 
+    const fetchArtistSongs = async (artistId) => {
+  console.log("ARTIST ID →", artistId);
+
+  try {
+    const res = await axios.get(
+      `https://saavn.sumit.co/api/artists/${artistId}/songs`
+    );
+
+    console.log("FULL RESPONSEvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvv →", res.data);
+    console.log("SONGS →", JSON.stringify(res.data, null, 2));
+
+  } catch (error) {
+    console.log("API ERROR →", error.response?.data || error.message);
+  }
+};
+
+useEffect(() => {
+  fetchArtistSongs("468245");   // 👈 Artist ID
+}, []);
+ 
     const fetchData = async () => {
         setLoading(true);
-        setData([]);
+        setData([]); // Clear old data
+
         try {
+            // 1. Suggested Tab Logic (Mixed Data)
             if (activeTab === 'Suggested') {
                 const songRes = await axios.get("https://saavn.sumit.co/api/search/songs", {
                     params: { query: "trending", limit: 6 }
@@ -59,24 +81,40 @@ const Home = () => {
                     mostPlayed: songRes.data.data.results.reverse().slice(0, 4)
                 });
                 setLoading(false);
-                return;
+                return; 
             }
 
-            let endpoint = "https://saavn.sumit.co/api/search/songs";
-            let query = "top";
+            // 2. Tab Specific Logic
+            let endpoint = "";
+            let query = "";
+            let params = { limit: 50 }; // Default limit
 
-            switch (activeTab) {
-                case 'Songs':   endpoint = "https://saavn.sumit.co/api/search/songs";   query = "latest"; break;
-                case 'Albums':  endpoint = "https://saavn.sumit.co/api/search/albums";  query = "party";  break;
-                case 'Artists': endpoint = "https://saavn.sumit.co/api/search/artists"; query = "star";   break;
+            if (activeTab === 'Albums') {
+                // Specific Logic for ALBUMS as requested
+                endpoint = "https://saavn.sumit.co/api/search/albums";
+                query = "top"; 
+                params = { 
+                    query: "top",
+                    limit: 50 // Thoda jada data mangaya taaki scroll accha lage
+                };
+            } else if (activeTab === 'Songs') {
+                endpoint = "https://saavn.sumit.co/api/search/songs";
+                params = { query: "latest", limit: 200 };
+            } else if (activeTab === 'Artists') {
+                endpoint = "https://saavn.sumit.co/api/search/artists";
+                params = { query: "top", limit: 200 };
             }
 
-            const res = await axios.get(endpoint, { params: { query, limit: 200 } });
+            // Call API
+            const res = await axios.get(endpoint, { params: params });
+            console.log(res.data,"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaag")
+            console.log(`${activeTab} Data Fetch:`, res.data?.data?.results?.length);
 
             if (res.data?.data?.results) {
                 setData(res.data.data.results);
             }
-        } catch (error) {
+
+        } catch (error) { 
             console.log("API Error", error);
         } finally {
             setLoading(false);
@@ -88,23 +126,33 @@ const Home = () => {
         if (!data) return [];
         let sortedList = [...data];
 
+        // 1. Common Name Sorting
         if (sortOption === 'Ascending') {
             return sortedList.sort((a, b) => a.name.localeCompare(b.name));
-        } else if (sortOption === 'Descending') {
+        } 
+        else if (sortOption === 'Descending') {
             return sortedList.sort((a, b) => b.name.localeCompare(a.name));
-        } else if (sortOption === 'Artist') {
+        } 
+        // 2. Artist Sorting (Works for Songs, Artists, Albums)
+        else if (sortOption === 'Artist') {
             return sortedList.sort((a, b) => {
-                const artistA = a.artists?.primary?.[0]?.name || a.artist || a.name || "Unknown";
-                const artistB = b.artists?.primary?.[0]?.name || b.artist || b.name || "Unknown";
+                const artistA = a.artists?.primary?.[0]?.name || a.artist || "Unknown";
+                const artistB = b.artists?.primary?.[0]?.name || b.artist || "Unknown";
                 return artistA.localeCompare(artistB);
             });
         }
+        // 3. Year Sorting (Mainly for Albums)
+        else if (sortOption === 'Year' && activeTab === 'Albums') {
+            return sortedList.sort((a, b) => (b.year || 0) - (a.year || 0)); // Newest first
+        }
+
         return sortedList;
     };
 
-    // --- SORT HANDLER (Songs + Artists dono ke liye) ---
+    // --- SORT HANDLER ---
     const handleSortPress = () => {
-        if (activeTab === 'Songs' || activeTab === 'Artists') {
+        // Ab Songs, Artists, AUR Albums teeno ke liye Sort Modal khulega
+        if (activeTab === 'Songs' || activeTab === 'Artists' || activeTab === 'Albums') {
             setSortModalVisible(true);
         }
     };
@@ -125,16 +173,16 @@ const Home = () => {
             case 'Songs':
                 return <SongListSection data={getSortedData()} />;
             case 'Artists':
-                return <ArtistListSection data={getSortedData()} />; // ✅ Sorted data
+                return <ArtistListSection data={getSortedData()} />;
             case 'Albums':
-                return <AlbamListSection data={data} />;
+                return <AlbamListSection data={getSortedData()} />; // ✅ Updated with Sort
             default:
                 return null;
         }
     };
-
-    // Sort button active hai ya nahi
-    const isSortActive = activeTab === 'Songs' || activeTab === 'Artists';
+ 
+    // Logic: Sort Icon tab dikhega jab Songs, Artists ya Albums tab active ho
+    const isSortActive = ['Songs', 'Artists', 'Albums'].includes(activeTab);
 
     return (
         <View style={[styles.mainContainer, { paddingTop: insets.top }]}>
@@ -145,7 +193,7 @@ const Home = () => {
             {/* 2. Tabs */}
             <Tabs tabs={tabs} activeTab={activeTab} setActiveTab={setActiveTab} />
 
-            {/* 3. Stats / Filter Row - Suggested chhod kar sab me dikhega */}
+            {/* 3. Stats / Filter Row */}
             {activeTab !== 'Suggested' && (
                 <View style={styles.statsRow}>
 
@@ -154,7 +202,7 @@ const Home = () => {
                         {data.length} {activeTab.toLowerCase()}
                     </Text>
 
-                    {/* Sort Button */}
+                    {/* Sort Button (Global Modal Trigger) */}
                     <TouchableOpacity
                         style={styles.sortBtn}
                         onPress={handleSortPress}
@@ -182,7 +230,7 @@ const Home = () => {
                 {renderContent()}
             </View>
 
-            {/* 5. Sort Modal */}
+            {/* 5. Sort Modal (Global) */}
             <SortModal
                 visible={isSortModalVisible}
                 selectedOption={sortOption}

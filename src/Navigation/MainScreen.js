@@ -10,6 +10,16 @@ export default function MainScreen(Stack) {
          component={BottomTab}
          options={{ headerShown: false }}
         />
+        <Stack.Screen 
+         name={NavigationString.AlbamSongList}
+         component={Screen.AlbamSongList}
+         options={{ headerShown: false }}
+        />
+        <Stack.Screen 
+         name={NavigationString.MusicPlayer}
+         component={Screen.MusicPlayer}
+         options={{ headerShown: false }}
+        />
         </>
    
     );

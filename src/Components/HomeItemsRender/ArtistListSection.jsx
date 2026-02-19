@@ -1,37 +1,67 @@
 import { StyleSheet, Text, View, FlatList, Image, TouchableOpacity } from 'react-native'
-import React from 'react'
+import React, { useState } from 'react' // Import useState
 import Ionicons from '@react-native-vector-icons/ionicons'
 import colors from '../../Styles/colors'
 import { scale, verticalScale, moderateScale, textScale } from '../../Styles/StyleConfig'
 
+// IMPORT NEW MODAL
+import ArtistDetailsModal from '../../Components/Modal/ArtistDetailsModal';
+
 const ArtistListSection = ({ data }) => {
-    console.log(data,"Artist data")
+    
+  // --- STATE FOR MODAL ---
+  const [modalVisible, setModalVisible] = useState(false);
+  const [selectedArtist, setSelectedArtist] = useState(null);
+
   const getImageUrl = (images) => {
     if (!images || images.length === 0) return 'https://via.placeholder.com/150';
     return images[images.length - 1]?.url;
   };
 
+  // --- OPEN MODAL FUNCTION ---
+  const openDetails = (item) => {
+      setSelectedArtist(item);
+      setModalVisible(true);
+  };
+
   const renderItem = ({ item }) => (
       <View style={styles.artistRow}>
-         <Image source={{ uri: getImageUrl(item.image) }} style={styles.artistRowImage} />
-         <View style={styles.artistRowText}>
-             <Text style={styles.rowTitle}>{item.name}</Text>
-             <Text style={styles.rowSub}>1 Album  |  Songs: N/A</Text>
+         {/* Artist Image & Name Section */}
+         <View style={{flexDirection: 'row', alignItems: 'center', flex: 1}}>
+             <Image source={{ uri: getImageUrl(item.image) }} style={styles.artistRowImage} />
+             <View style={styles.artistRowText}>
+                 <Text style={styles.rowTitle}>{item.name}</Text>
+                 <Text style={styles.rowSub}>1 Album  |  Songs: N/A</Text>
+             </View>
          </View>
-         <TouchableOpacity>
+
+         {/* Three Dots - Clicking this opens the modal */}
+         <TouchableOpacity 
+            style={{ padding: 10 }}
+            onPress={() => openDetails(item)}
+         >
             <Ionicons name="ellipsis-vertical" size={20} color={colors.SecondaryText} />
          </TouchableOpacity>
       </View>
   );
 
   return (
-    <FlatList
-      data={data}
-      renderItem={renderItem}
-      keyExtractor={item => item.id.toString()}
-      contentContainerStyle={styles.listContent}
-      showsVerticalScrollIndicator={false}
-    />
+    <>
+        <FlatList
+            data={data}
+            renderItem={renderItem}
+            keyExtractor={item => item.id.toString()}
+            contentContainerStyle={styles.listContent}
+            showsVerticalScrollIndicator={false}
+        />
+
+        {/* --- ARTIST DETAILS MODAL --- */}
+        <ArtistDetailsModal 
+            visible={modalVisible}
+            artist={selectedArtist}
+            onClose={() => setModalVisible(false)}
+        />
+    </>
   )
 }
 
@@ -46,7 +76,8 @@ const styles = StyleSheet.create({
   artistRow: { 
     flexDirection: 'row', 
     alignItems: 'center', 
-    marginBottom: verticalScale(20) 
+    marginBottom: verticalScale(20),
+    justifyContent: 'space-between' // Ensures dots go to right
   },
   artistRowImage: { 
     width: moderateScale(60), 

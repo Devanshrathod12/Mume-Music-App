@@ -1,4 +1,4 @@
-import React, { useRef, useEffect, useState } from 'react';
+import React, { useRef, useEffect } from 'react';
 import {
   StyleSheet,
   Text,
@@ -17,26 +17,24 @@ import colors from '../../Styles/colors';
 
 const { height: SCREEN_HEIGHT } = Dimensions.get('window');
 
-const SongDetailsModal = ({ visible, onClose, song, onPlayNext }) => {
-  const [isLiked, setIsLiked] = useState(false);
-  
+const ArtistDetailsModal = ({ visible, onClose, artist }) => {
   // Animation Values
-  const slideAnim = useRef(new Animated.Value(SCREEN_HEIGHT)).current;
-  const translateY = useRef(new Animated.Value(0)).current;
+  const slideAnim = useRef(new Animated.Value(SCREEN_HEIGHT)).current; // Entry animation
+  const translateY = useRef(new Animated.Value(0)).current; // Drag gesture value
 
-  // 1. Open/Close Animation
+  // 1. Open/Close Animation (Jab modal khulega tab niche se upar aayega)
   useEffect(() => {
     if (visible) {
+      // Modal open animation
       Animated.timing(slideAnim, {
         toValue: 0,
         duration: 300,
         useNativeDriver: true,
       }).start();
-      
-      // Reset drag & like state
+      // Reset drag value on open
       translateY.setValue(0);
-      setIsLiked(false);
     } else {
+      // Modal close animation
       Animated.timing(slideAnim, {
         toValue: SCREEN_HEIGHT,
         duration: 300,
@@ -45,32 +43,34 @@ const SongDetailsModal = ({ visible, onClose, song, onPlayNext }) => {
     }
   }, [visible]);
 
-  // 2. FIXED PAN RESPONDER (Same logic as Artist Modal)
+  // 2. PanResponder (Sirf NICHE drag karne ki logic)
   const panResponder = useRef(
     PanResponder.create({
       onStartShouldSetPanResponder: () => true,
-
+      
+      // Grant: Touch shuru hote hi offset set nahi karenge taaki complex na ho, bas current value lenge
       onPanResponderGrant: () => {
         translateY.setValue(0);
       },
 
-      // IMPORTANT FIX HERE:
+      // Move: Yahan fix kiya hai logic
       onPanResponderMove: (e, gestureState) => {
         if (gestureState.dy > 0) {
-           // Sirf neeche drag allow karo (Positive Y)
+           // Agar gesture niche ki taraf hai (positive), toh modal ko move karo
            translateY.setValue(gestureState.dy);
         } else {
-           // Upar mat jane do (Lock at 0)
+           // Agar gesture upar ki taraf hai (negative), toh modal ko 0 par lock rakho (upar mat jane do)
            translateY.setValue(0);
         }
       },
 
-      onPanResponderRelease: (_, gestureState) => {
-        // Agar jyada niche khicha ya fast swipe kiya
+      // Release: Chodne par kya hoga
+      onPanResponderRelease: (e, gestureState) => {
+        // Agar bhot tezi se niche swip kiya ya 100px se jyada niche khich liya
         if (gestureState.dy > 120 || gestureState.vy > 1.5) {
             closeWithAnimation();
         } else {
-            // Wapas bounce back (Snap to top)
+            // Wapas apni jagah bounce back karo (Open state me)
             Animated.spring(translateY, {
               toValue: 0,
               bounciness: 5,
@@ -81,6 +81,7 @@ const SongDetailsModal = ({ visible, onClose, song, onPlayNext }) => {
     })
   ).current;
 
+  // Custom Close Helper
   const closeWithAnimation = () => {
     Animated.timing(translateY, {
         toValue: SCREEN_HEIGHT,
@@ -88,100 +89,81 @@ const SongDetailsModal = ({ visible, onClose, song, onPlayNext }) => {
         useNativeDriver: true,
     }).start(() => {
         onClose();
-        // Reset transform
-        translateY.setValue(0); 
+        // Resetting just in case
+        translateY.setValue(0);
     });
   };
 
-  // Helper Functions
-  const getImageUrl = (img) => {
-    if (!img) return 'https://via.placeholder.com/150';
-    return Array.isArray(img) ? (img.find(i => i.quality === '500x500')?.url || img[img.length-1]?.url) : img;
+  // Helper: Get Image URL
+  const getImageUrl = (images) => {
+    if (!images || images.length === 0) return 'https://via.placeholder.com/150';
+    return Array.isArray(images) 
+      ? (images.find(img => img.quality === '500x500')?.url || images[images.length - 1]?.url)
+      : images;
   };
 
-  const getSubtitle = () => {
-    if(!song) return "";
-    const artist = song.artists?.primary?.[0]?.name || song.artist || "Unknown";
-    const duration = song.duration ? `${Math.floor(song.duration / 60)}:${(song.duration % 60).toString().padStart(2, '0')} mins` : "";
-    return `${artist}  |  ${duration}`;
-  };
-
-  // Menu Items
+  // Menu Items Array
   const menuItems = [
-    { title: "Play Next", icon: "arrow-forward-circle-outline", action: () => { onPlayNext(song); onClose(); } },
+    { title: "Play", icon: "play-circle-outline" },
+    { title: "Play Next", icon: "arrow-forward-circle-outline" },
     { title: "Add to Playing Queue", icon: "albums-outline" },
     { title: "Add to Playlist", icon: "add-circle-outline" },
-    { title: "Go to Album", icon: "disc-outline" },
-    { title: "Go to Artist", icon: "person-outline" },
-    { title: "Details", icon: "information-circle-outline" },
-    { title: "Set as Ringtone", icon: "call-outline" },
-    { title: "Add to Blacklist", icon: "close-circle-outline" },
     { title: "Share", icon: "paper-plane-outline" },
-    { title: "Delete from Device", icon: "trash-outline" },
   ];
 
-  if (!song) return null;
+  if (!artist) return null;
 
   return (
     <Modal visible={visible} transparent animationType="none" onRequestClose={closeWithAnimation}>
       
-      {/* Black Transparent Overlay */}
+      {/* 1. Dark Background Overlay (Touches here close modal) */}
       <TouchableOpacity style={styles.overlay} activeOpacity={1} onPress={closeWithAnimation} />
 
-      {/* Main DragSheet Container */}
+      {/* 2. Main Sheet Container */}
       <Animated.View 
         style={[
             styles.modalContainer,
-            // SlideIn Animation + Drag Gesture Animation
+            // Apply both Entry Animation + Drag Animation
             { transform: [{ translateY: Animated.add(slideAnim, translateY) }] }
         ]}
       >
-          {/* Header Area (With Gesture Handler) */}
+          {/* Header Area (Is par drag gesture apply kiya hai) */}
           <View {...panResponder.panHandlers} style={styles.dragHeader}>
-               {/* Grey Drag Handle */}
                <View style={styles.dragHandle} />
                
-               {/* Song Info Row */}
-               <View style={styles.songHeader}>
-                   {/* Image */}
+               {/* Artist Info Row */}
+               <View style={styles.artistHeader}>
                    <Image 
-                      source={{ uri: getImageUrl(song.image) }} 
+                      source={{ uri: getImageUrl(artist.image) }} 
                       style={styles.headerImage} 
                    />
                    
-                   {/* Text */}
                    <View style={styles.headerTextContainer}>
-                        <Text style={styles.songTitle} numberOfLines={1}>{song.name}</Text>
-                        <Text style={styles.songSub} numberOfLines={1}>{getSubtitle()}</Text>
+                        <Text style={styles.artistTitle} numberOfLines={1}>{artist.name}</Text>
+                        <Text style={styles.artistSub}>1 Album  |  20 Songs</Text> 
                    </View>
-
-                   {/* Heart Icon Toggle */}
-                   <TouchableOpacity onPress={() => setIsLiked(!isLiked)}>
-                       <Ionicons 
-                         name={isLiked ? "heart" : "heart-outline"} 
-                         size={moderateScale(28)} 
-                         color={isLiked ? "#E11D48" : colors.Black}
-                       />
-                   </TouchableOpacity>
                </View>
 
                <View style={styles.divider} />
           </View>
 
-          {/* Options Scroll List */}
+          {/* List Options */}
           <ScrollView 
             contentContainerStyle={styles.scrollContent} 
             showsVerticalScrollIndicator={false}
-            bounces={false} // List bounce disable kiya taaki modal smooth feel ho
+            bounces={false} // List bounce band kiya taaki modal hilne na lage
           >
               {menuItems.map((item, index) => (
                   <TouchableOpacity 
                     key={index} 
                     style={styles.menuRow}
-                    onPress={() => item.action && item.action()}
                     activeOpacity={0.6}
+                    onPress={() => {
+                        console.log("Clicked:", item.title);
+                        closeWithAnimation(); 
+                    }}
                   >
-                      <Ionicons name={item.icon} size={moderateScale(24)} color={colors.HeadingColor} style={styles.menuIcon} />
+                      <Ionicons name={item.icon} size={moderateScale(26)} color={colors.HeadingColor} style={styles.menuIcon} />
                       <Text style={styles.menuText}>{item.title}</Text>
                   </TouchableOpacity>
               ))}
@@ -192,27 +174,28 @@ const SongDetailsModal = ({ visible, onClose, song, onPlayNext }) => {
   );
 };
 
-export default SongDetailsModal;
+export default ArtistDetailsModal;
 
 const styles = StyleSheet.create({
   overlay: {
     flex: 1,
-    backgroundColor: 'rgba(0,0,0,0.5)',
+    backgroundColor: 'rgba(0,0,0,0.5)', // Darken background
   },
   modalContainer: {
-    height: '80%', // Ye 80% fixed rahegi
+    height: '56%', // FIX HEIGHT: Ye fixed rahegi, isse upar drag nahi hoga
     width: '100%',
     backgroundColor: '#FFFFFF',
     borderTopLeftRadius: scale(30),
     borderTopRightRadius: scale(30),
     position: 'absolute',
     bottom: 0,
-    overflow: 'hidden', 
+    overflow: 'hidden',
   },
   dragHeader: {
     paddingHorizontal: scale(25),
     paddingTop: verticalScale(15),
     backgroundColor: '#FFFFFF',
+    // zIndex zruri hai taaki header touch receive kare
     zIndex: 1,
   },
   dragHandle: {
@@ -223,7 +206,7 @@ const styles = StyleSheet.create({
     alignSelf: 'center',
     marginBottom: verticalScale(20),
   },
-  songHeader: {
+  artistHeader: {
     flexDirection: 'row',
     alignItems: 'center',
     marginBottom: verticalScale(20),
@@ -231,48 +214,47 @@ const styles = StyleSheet.create({
   headerImage: {
     width: moderateScale(60),
     height: moderateScale(60),
-    borderRadius: scale(12),
+    borderRadius: 100, // Round
     backgroundColor: colors.LightGray
   },
   headerTextContainer: {
     flex: 1,
     marginLeft: scale(15),
     justifyContent: 'center',
-    paddingRight: scale(10)
   },
-  songTitle: {
+  artistTitle: {
     fontSize: textScale(18),
     fontWeight: '700',
     color: colors.HeadingColor,
-    marginBottom: verticalScale(2)
+    marginBottom: verticalScale(4)
   },
-  songSub: {
+  artistSub: {
     fontSize: textScale(12),
     color: '#64748B', 
     fontWeight: '500'
   },
   divider: {
     height: 1,
-    backgroundColor: '#F1F5F9', 
+    backgroundColor: '#F1F5F9',
     width: '100%',
     marginBottom: verticalScale(10)
   },
   scrollContent: {
       paddingHorizontal: scale(25),
-      paddingBottom: verticalScale(50),
+      paddingBottom: verticalScale(30),
   },
   menuRow: {
       flexDirection: 'row',
       alignItems: 'center',
-      paddingVertical: verticalScale(14),
+      paddingVertical: verticalScale(15),
   },
   menuIcon: {
-      marginRight: scale(15),
+      marginRight: scale(20),
       color: colors.HeadingColor,
   },
   menuText: {
       fontSize: textScale(16),
-      fontWeight: '500',
+      fontWeight: '600',
       color: colors.HeadingColor
   }
 });

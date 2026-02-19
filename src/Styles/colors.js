@@ -2,6 +2,7 @@
 // colors.js
 export default {
     WhiteBackground: "#FFFFFF",
+    White20: "#FFFFFF33",
     HeadingColor: "#1E293B", // Dark text
     Primary: "#FF5400",       // The Mume Orange
     SecondaryText: "#94A3B8", // Light Grey for artists/duration
