@@ -280,23 +280,44 @@ const SuggestedSection = ({ suggestedData }) => {
                 )}
             />
 
-            {/* 3. Trending Now */}
-            <View style={styles.sectionHeader}>
-                <Text style={[styles.sectionTitle, { color: theme.HeadingColor }]}>Trending Now</Text>
-            </View>
-            {suggestedData?.recentlyPlayed?.slice(0, 3).map((item) => (
-                <TouchableOpacity 
-                    key={item.id} 
-                    style={[styles.bigCard, { backgroundColor: theme.CardBackground }]}
-                    onPress={() => navigation.navigate('MusicPlayer')}
-                >
-                    <Image source={{uri: getImageUrl(item.image)}} style={styles.bigCardImage} />
-                    <View style={[styles.bigCardText, { backgroundColor: theme.Overlay }]}>
-                        <Text style={styles.bigCardTitle}>{item.name}</Text>
-                        <Text style={styles.bigCardSub}>Featured Trending</Text>
+            {recentSongs.length > 0 && (
+                <>
+                    <View style={styles.sectionHeader}>
+                        <Text style={[styles.sectionTitle, { color: theme.HeadingColor }]}>Most Played</Text>
+                        <TouchableOpacity><Text style={[styles.seeAll, { color: theme.Primary }]}>See All</Text></TouchableOpacity>
                     </View>
-                </TouchableOpacity>
-            ))}
+                    <FlatList 
+                        horizontal
+                        data={recentSongs}
+                        keyExtractor={(item, index) => index.toString()}
+                        showsHorizontalScrollIndicator={false}
+                        contentContainerStyle={{ paddingHorizontal: scale(20) }}
+                        renderItem={({item, index}) => {
+                            const isPlaying = activeTrack?.id === item.id;
+                            return (
+                                <TouchableOpacity 
+                                    style={styles.horizontalCard} 
+                                    onPress={() => handleRecentPlay(item, index)}
+                                >
+                                    <View>
+                                        <Image source={{uri: getImageUrl(item.artwork || item.image)}} style={[styles.horizontalImage, { backgroundColor: theme.LightGray }]} />
+                                        {isPlaying && (
+                                            <View style={[styles.playingOverlay, { backgroundColor: theme.Overlay }]}>
+                                                <Text style={[styles.playingText, { backgroundColor: theme.Primary }]}>Playing</Text>
+                                            </View>
+                                        )}
+                                    </View>
+                                    <Text style={[styles.cardTitle, { color: isPlaying ? theme.Primary : theme.Black }]} numberOfLines={1}>
+                                        {item.title || item.name}
+                                    </Text>
+                                    <Text style={[styles.cardSub, { color: theme.SecondaryText }]} numberOfLines={1}>{item.artist || "Artist"}</Text>
+                                </TouchableOpacity>
+                            )
+                        }}
+                    />
+                </>
+            )}
+
         </ScrollView>
     )
 }

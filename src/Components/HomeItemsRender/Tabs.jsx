@@ -133,6 +133,7 @@ export default Tabs
 const styles = StyleSheet.create({
   tabsContainer: { 
     position: 'relative', 
+    marginTop:verticalScale(8)
   },
   backgroundLine: {
     position: 'absolute',

@@ -1,13 +1,15 @@
+
 // import React, { useState, useEffect, useRef } from 'react';
 // import { 
-//     StyleSheet, View, ActivityIndicator, TouchableOpacity, Text 
+//     StyleSheet, View, ActivityIndicator, TouchableOpacity, Text, StatusBar 
 // } from 'react-native';
 // import axios from 'axios';
 // import { useSafeAreaInsets } from 'react-native-safe-area-context';
 // import Ionicons from '@react-native-vector-icons/ionicons';
 // import PagerView from 'react-native-pager-view';
 
-// import colors from '../Styles/colors';
+// // Theme & Config
+// import { useTheme } from '../Context/ThemeContext'; // 👈 Theme Access
 // import { scale, textScale } from '../Styles/StyleConfig';
 
 // import Header from '../Components/HomeItemsRender/Header';
@@ -21,6 +23,7 @@
 // const Home = () => {
 //     const insets = useSafeAreaInsets(); 
 //     const pagerRef = useRef(null);
+//     const { theme } = useTheme(); // 👈 Context se theme liya
 
 //     const tabs = ["Suggested", "Songs", "Artists", "Albums"];
 //     const [activeIndex, setActiveIndex] = useState(0); 
@@ -79,7 +82,6 @@
 //                 } 
 
 //                 const res = await axios.get(endpoint, { params: { query, limit } });
-//                 console.log(res,"yhjbbdbdobnjkvnskjvdbjdoibjeuibeuibbuiehbuirh") 
 //                 const results = res.data?.data?.results || [];
 //                 setAllData(prev => ({
 //                     ...prev,
@@ -118,11 +120,15 @@
 
 //     const currentTabName = tabs[activeIndex];
 //     const currentData = allData[currentTabName];
-//     const isSortActive = currentTabName !== 'Suggested';
 //     const displayCount = Array.isArray(currentData) ? currentData.length : 0;
 
 //     return (
-//         <View style={[styles.mainContainer, { paddingTop: insets.top }]}>
+//         <View style={[styles.mainContainer, { backgroundColor: theme.WhiteBackground, paddingTop: insets.top }]}>
+//             <StatusBar 
+//                 barStyle={theme.WhiteBackground === '#FFFFFF' ? "dark-content" : "light-content"} 
+//                 backgroundColor={theme.WhiteBackground} 
+//             />
+            
 //             <Header />
 
 //             <Tabs 
@@ -133,7 +139,7 @@
 
 //             {currentTabName !== 'Suggested' && (
 //                 <View style={styles.statsRow}>
-//                     <Text style={styles.countText}>
+//                     <Text style={[styles.countText, { color: theme.HeadingColor }]}>
 //                         {displayCount} {currentTabName.toLowerCase()}
 //                     </Text>
 
@@ -141,10 +147,10 @@
 //                         style={styles.sortBtn}
 //                         onPress={() => setSortModalVisible(true)}
 //                     >
-//                         <Text style={[styles.sortText, { color: colors.Primary }]}>
+//                         <Text style={[styles.sortText, { color: theme.Primary }]}>
 //                             {sortOption}
 //                         </Text>
-//                         <Ionicons name="swap-vertical-outline" size={16} color={colors.Primary} style={{ marginLeft: 4 }} />
+//                         <Ionicons name="swap-vertical-outline" size={16} color={theme.Primary} style={{ marginLeft: 4 }} />
 //                     </TouchableOpacity>
 //                 </View>
 //             )}
@@ -152,7 +158,7 @@
 //             <View style={{ flex: 1 }}>
 //                 {loading && (!currentData || (Array.isArray(currentData) && currentData.length === 0)) ? (
 //                     <View style={styles.loaderContainer}>
-//                         <ActivityIndicator size="large" color={colors.Primary} />
+//                         <ActivityIndicator size="large" color={theme.Primary} />
 //                     </View>
 //                 ) : (
 //                     <PagerView
@@ -198,7 +204,6 @@
 // const styles = StyleSheet.create({
 //     mainContainer: {
 //         flex: 1,
-//         backgroundColor: colors.WhiteBackground,
 //     },
 //     pagerView: {
 //         flex: 1,
@@ -222,7 +227,6 @@
 //     countText: {
 //         fontSize: textScale(18),
 //         fontWeight: '700',
-//         color: colors.HeadingColor
 //     },
 //     sortBtn: {
 //         flexDirection: 'row',
@@ -243,8 +247,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Ionicons from '@react-native-vector-icons/ionicons';
 import PagerView from 'react-native-pager-view';
 
-// Theme & Config
-import { useTheme } from '../Context/ThemeContext'; // 👈 Theme Access
+import { useTheme } from '../Context/ThemeContext';
 import { scale, textScale } from '../Styles/StyleConfig';
 
 import Header from '../Components/HomeItemsRender/Header';
@@ -258,7 +261,7 @@ import SortModal from '../Components/Modal/SortModal';
 const Home = () => {
     const insets = useSafeAreaInsets(); 
     const pagerRef = useRef(null);
-    const { theme } = useTheme(); // 👈 Context se theme liya
+    const { theme } = useTheme();
 
     const tabs = ["Suggested", "Songs", "Artists", "Albums"];
     const [activeIndex, setActiveIndex] = useState(0); 
@@ -270,7 +273,13 @@ const Home = () => {
         Albums: []
     });
 
-    const [loading, setLoading] = useState(false);
+    const [loadingMap, setLoadingMap] = useState({
+        Suggested: false,
+        Songs: false,
+        Artists: false,
+        Albums: false,
+    });
+
     const [isSortModalVisible, setSortModalVisible] = useState(false);
     const [sortOption, setSortOption] = useState('Ascending');
 
@@ -278,13 +287,12 @@ const Home = () => {
         fetchData(tabs[activeIndex]);
     }, [activeIndex]);
 
-
     const fetchData = async (tabName) => {
         if (allData[tabName] && (Array.isArray(allData[tabName]) ? allData[tabName].length > 0 : allData[tabName].recentlyPlayed?.length > 0)) {
             return;
         }
 
-        setLoading(true);
+        setLoadingMap(prev => ({ ...prev, [tabName]: true }));
         try {
             if (tabName === 'Suggested') {
                 const [songRes, artistRes] = await Promise.all([
@@ -326,7 +334,7 @@ const Home = () => {
         } catch (error) {
             console.log("Error:", error);
         } finally {
-            setLoading(false);
+            setLoadingMap(prev => ({ ...prev, [tabName]: false }));
         }
     };
 
@@ -375,7 +383,7 @@ const Home = () => {
             {currentTabName !== 'Suggested' && (
                 <View style={styles.statsRow}>
                     <Text style={[styles.countText, { color: theme.HeadingColor }]}>
-                        {displayCount} {currentTabName.toLowerCase()}
+                        {loadingMap[currentTabName] ? '...' : displayCount} {currentTabName.toLowerCase()}
                     </Text>
 
                     <TouchableOpacity
@@ -390,36 +398,46 @@ const Home = () => {
                 </View>
             )}
 
-            <View style={{ flex: 1 }}>
-                {loading && (!currentData || (Array.isArray(currentData) && currentData.length === 0)) ? (
-                    <View style={styles.loaderContainer}>
-                        <ActivityIndicator size="large" color={theme.Primary} />
-                    </View>
-                ) : (
-                    <PagerView
-                        ref={pagerRef}
-                        style={styles.pagerView}
-                        initialPage={0}
-                        onPageSelected={onPageSelected}
-                    >
-                        <View key="0" style={styles.page}>
-                             <SuggestedSection suggestedData={allData.Suggested} />
-                        </View>
+            <PagerView
+                ref={pagerRef}
+                style={styles.pagerView}
+                initialPage={0}
+                onPageSelected={onPageSelected}
+            >
+                <View key="0" style={styles.page}>
+                    <SuggestedSection suggestedData={allData.Suggested} />
+                </View>
 
-                        <View key="1" style={styles.page}>
-                             <SongListSection data={getSortedData(allData.Songs)} />
+                <View key="1" style={styles.page}>
+                    {loadingMap.Songs && allData.Songs.length === 0 ? (
+                        <View style={styles.loaderContainer}>
+                            <ActivityIndicator size="large" color={theme.Primary} />
                         </View>
+                    ) : (
+                        <SongListSection data={getSortedData(allData.Songs)} />
+                    )}
+                </View>
 
-                        <View key="2" style={styles.page}>
-                             <ArtistListSection data={getSortedData(allData.Artists)} />
+                <View key="2" style={styles.page}>
+                    {loadingMap.Artists && allData.Artists.length === 0 ? (
+                        <View style={styles.loaderContainer}>
+                            <ActivityIndicator size="large" color={theme.Primary} />
                         </View>
+                    ) : (
+                        <ArtistListSection data={getSortedData(allData.Artists)} />
+                    )}
+                </View>
 
-                        <View key="3" style={styles.page}>
-                             <AlbamListSection data={getSortedData(allData.Albums)} />
+                <View key="3" style={styles.page}>
+                    {loadingMap.Albums && allData.Albums.length === 0 ? (
+                        <View style={styles.loaderContainer}>
+                            <ActivityIndicator size="large" color={theme.Primary} />
                         </View>
-                    </PagerView>
-                )}
-            </View>
+                    ) : (
+                        <AlbamListSection data={getSortedData(allData.Albums)} />
+                    )}
+                </View>
+            </PagerView>
 
             <SortModal
                 visible={isSortModalVisible}

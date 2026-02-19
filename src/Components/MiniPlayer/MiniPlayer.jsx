@@ -1,101 +1,186 @@
-import React from 'react';
-import { StyleSheet, Text, View, Image, TouchableOpacity, Dimensions } from 'react-native';
+import React, { useEffect, useRef, useState } from 'react';
+import {
+  StyleSheet,
+  Text,
+  View,
+  Image,
+  TouchableOpacity,
+  Dimensions,
+  Animated
+} from 'react-native';
+
 import Ionicons from '@react-native-vector-icons/ionicons';
 import { useNavigation } from '@react-navigation/native';
-import TrackPlayer, { useActiveTrack, useIsPlaying } from 'react-native-track-player';
+import TrackPlayer, {
+  useActiveTrack,
+  useIsPlaying,
+  useProgress
+} from 'react-native-track-player';
 
-// Theme Context & Config
-import { useTheme } from '../../Context/ThemeContext'; 
-import { scale, verticalScale, textScale } from '../../Styles/StyleConfig'; 
+import { useTheme } from '../../Context/ThemeContext';
+import { scale, verticalScale, textScale } from '../../Styles/StyleConfig';
 
 const { width } = Dimensions.get('window');
 
 const MiniPlayer = () => {
   const navigation = useNavigation();
-  const activeTrack = useActiveTrack(); 
-  const { playing } = useIsPlaying(); 
-  const { theme } = useTheme(); // 👈 Theme data access
+  const activeTrack = useActiveTrack();
+  const { playing } = useIsPlaying();
+  const { theme } = useTheme();
+
+  const { position, duration } = useProgress(200);
+  const progressPercent = duration > 0 ? (position / duration) * 100 : 0;
+
+  /* ---------------- LOADER STATE ---------------- */
+
+  const [showLoader, setShowLoader] = useState(true);
+  const loaderAnim = useRef(new Animated.Value(-width)).current;
+
+  /* Track change detect */
+  useEffect(() => {
+    if (!activeTrack) return;
+
+    setShowLoader(true);
+
+    Animated.loop(
+      Animated.timing(loaderAnim, {
+        toValue: width,
+        duration: 900,
+        useNativeDriver: true,
+      })
+    ).start();
+
+    const timer = setTimeout(() => {
+      setShowLoader(false);
+      loaderAnim.setValue(-width);
+    }, 5000);
+
+    return () => clearTimeout(timer);
+  }, [activeTrack?.id]);
 
   if (!activeTrack) return null;
 
-  // --- Functions ---
   const togglePlayback = async () => {
-      if (playing) {
-          await TrackPlayer.pause();
-      } else {
-          await TrackPlayer.play();
-      }
+    if (playing) {
+      await TrackPlayer.pause();
+    } else {
+      await TrackPlayer.play();
+    }
   };
 
   const handleSkipNext = async () => {
-      try {
-          await TrackPlayer.skipToNext();
-      } catch (error) {
-          console.log("End of queue");
-      }
+    try {
+      await TrackPlayer.skipToNext();
+    } catch (error) {
+      console.log("No more tracks");
+    }
   };
 
   return (
-    <TouchableOpacity 
-      activeOpacity={0.95} 
+    <TouchableOpacity
+      activeOpacity={0.9}
       style={[
-        styles.container, 
-        { 
-          backgroundColor: theme.MiniPlayerBackground, // Dynamic BG
-          borderTopColor: theme.MiniPlayerBorder // Dynamic Border
+        styles.container,
+        {
+          backgroundColor: theme.MiniPlayerBackground,
+          borderTopColor: theme.MiniPlayerBorder,
         }
       ]}
       onPress={() => navigation.navigate('MusicPlayer')}
     >
-      
-      {/* 1. Play Progress Bar (Halka Orange line) */}
-      <View style={{height: 2, backgroundColor: theme.Primary, width: '100%', opacity: 0.3, position: 'absolute', top: 0}} />
-      <View style={{height: 2, backgroundColor: theme.Primary, width: '35%', position: 'absolute', top: 0}} />
+
+      {/* Background Line */}
+      <View
+        style={[
+          styles.progressBackground,
+          {
+            backgroundColor: theme.Separator,
+            opacity: 0.15
+          }
+        ]}
+      />
+
+      {/* ---------- LOADER ---------- */}
+      {showLoader ? (
+        <Animated.View
+          style={[
+            styles.loaderLine,
+            {
+              backgroundColor: theme.Primary,
+              transform: [{ translateX: loaderAnim }],
+            }
+          ]}
+        />
+      ) : (
+        /* ---------- REAL PROGRESS ---------- */
+        <View
+          style={[
+            styles.progressFill,
+            {
+              backgroundColor: theme.Primary,
+              width: `${progressPercent}%`,
+            }
+          ]}
+        />
+      )}
 
       <View style={styles.contentRow}>
-          
-          {/* Song Image */}
-          <Image 
-             source={{ uri: activeTrack?.artwork || 'https://via.placeholder.com/100' }} 
-             style={styles.image}
-          />
 
-          {/* Title & Artist */}
-          <View style={styles.textContainer}>
-              <Text style={[styles.title, { color: theme.HeadingColor }]} numberOfLines={1}>
-                {activeTrack?.title || "Unknown Title"}
-              </Text>
-              <Text style={[styles.artist, { color: theme.SecondaryText }]} numberOfLines={1}>
-                {activeTrack?.artist || "Unknown Artist"}
-              </Text>
-          </View>
+        <Image
+          source={{
+            uri: activeTrack?.artwork || 'https://via.placeholder.com/100'
+          }}
+          style={styles.image}
+        />
 
-          {/* Controls Right Side */}
-          <View style={styles.controls}>
-              
-              {/* Play/Pause Button */}
-              <TouchableOpacity 
-                style={styles.iconBtn}
-                onPress={(e) => { e.stopPropagation(); togglePlayback(); }}
-              >
-                  <Ionicons 
-                    name={playing ? "pause" : "play"} 
-                    size={28} 
-                    color={theme.Primary} 
-                  />
-              </TouchableOpacity>
+        <View style={styles.textContainer}>
+          <Text
+            style={[styles.title, { color: theme.HeadingColor }]}
+            numberOfLines={1}
+          >
+            {activeTrack?.title || "Unknown"}
+          </Text>
 
-              {/* Next Button */}
-              <TouchableOpacity 
-                style={[styles.iconBtn, { marginLeft: scale(10) }]} 
-                onPress={(e) => { e.stopPropagation(); handleSkipNext(); }}
-              >
-                  <Ionicons name="play-skip-forward" size={24} color={theme.Primary} />
-              </TouchableOpacity>
+          <Text
+            style={[styles.artist, { color: theme.SecondaryText }]}
+            numberOfLines={1}
+          >
+            {activeTrack?.artist || "Offline"}
+          </Text>
+        </View>
 
-          </View>
+        <View style={styles.controls}>
+
+          <TouchableOpacity
+            style={styles.iconBtn}
+            onPress={(e) => {
+              e.stopPropagation();
+              togglePlayback();
+            }}
+          >
+            <Ionicons
+              name={playing ? "pause" : "play"}
+              size={scale(30)}
+              color={theme.Primary}
+            />
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            style={[styles.iconBtn, { marginLeft: scale(15) }]}
+            onPress={(e) => {
+              e.stopPropagation();
+              handleSkipNext();
+            }}
+          >
+            <Ionicons
+              name="play-skip-forward"
+              size={scale(24)}
+              color={theme.Primary}
+            />
+          </TouchableOpacity>
+
+        </View>
       </View>
-
     </TouchableOpacity>
   );
 };
@@ -106,51 +191,80 @@ const styles = StyleSheet.create({
   container: {
     width: '100%',
     height: verticalScale(65),
-    borderTopWidth: 1,
+    borderTopWidth: 0.8,
     justifyContent: 'center',
-    elevation: 20, 
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: -5 },
-    shadowOpacity: 0.15,
-    shadowRadius: 5,
-    position: 'absolute', 
-    bottom: 65, // Tab bar ke theek upar
-    zIndex: 999 
+    position: 'absolute',
+    bottom: 60,
+    zIndex: 999,
+    elevation: 15,
+
+    shadowOffset: { width: 0, height: -3 },
+    shadowOpacity: 0.1,
+    shadowRadius: 3,
   },
+
+  progressBackground: {
+    height: 2.5,
+    width: '100%',
+    position: 'absolute',
+    top: 0
+  },
+
+  progressFill: {
+    height: 2.5,
+    position: 'absolute',
+    top: 0,
+    zIndex: 10
+  },
+
+  /* LOADER LINE */
+  loaderLine: {
+    height: 2.5,
+    width: width * 0.35,
+    position: 'absolute',
+    top: 0,
+    borderRadius: 5,
+    opacity: 0.9
+  },
+
   contentRow: {
     flexDirection: 'row',
     alignItems: 'center',
     paddingHorizontal: scale(15),
-    width: '100%',
-    height: '100%'
   },
+
   image: {
-    width: scale(45),
-    height: scale(45),
-    borderRadius: 12, // Thoda zyada rounded for modern look
-    backgroundColor: 'rgba(0,0,0,0.1)'
+    width: scale(42),
+    height: scale(42),
+    borderRadius: 6,
   },
+
   textContainer: {
     flex: 1,
     marginLeft: scale(12),
-    justifyContent: 'center'
   },
+
   title: {
     fontSize: textScale(14),
-    fontWeight: '700', // Thoda bold
-    marginBottom: 2
+    fontWeight: '700',
   },
+
   artist: {
     fontSize: textScale(11),
-    fontWeight: '500'
+    fontWeight: '500',
   },
+
   controls: {
     flexDirection: 'row',
     alignItems: 'center',
+    paddingLeft: scale(5)
   },
+
   iconBtn: {
-      padding: scale(5),
-      justifyContent: 'center',
-      alignItems: 'center'
+    justifyContent: 'center',
+    alignItems: 'center',
+    minWidth: scale(30)
   }
 });
+
+// last prevgrg

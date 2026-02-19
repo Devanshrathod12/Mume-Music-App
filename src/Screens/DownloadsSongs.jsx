@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { View, Text, FlatList, TouchableOpacity, Image, StyleSheet, ActivityIndicator, Alert } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import TrackPlayer, { Capability } from 'react-native-track-player';
-import { useNavigation } from '@react-navigation/native'; // 👈 Navigation added
+import { useNavigation } from '@react-navigation/native'; 
 import { useTheme } from '../Context/ThemeContext';
 import { scale, moderateScale, textScale, verticalScale } from '../Styles/StyleConfig';
 
@@ -10,7 +10,7 @@ const DownloadsSongs = () => {
     const [downloadedSongs, setDownloadedSongs] = useState([]);
     const [loading, setLoading] = useState(true);
     const { theme } = useTheme();
-    const navigation = useNavigation(); // 👈 Hook initialize kiya
+    const navigation = useNavigation(); 
 
     useEffect(() => {
         loadDownloads();
@@ -56,7 +56,6 @@ const DownloadsSongs = () => {
                 return;
             }
 
-            // 1. Player ko reset karein taaki purana queue khatam ho jaye
             await TrackPlayer.reset();
 
             // 2. Local file path format sahi karein
@@ -65,7 +64,6 @@ const DownloadsSongs = () => {
                 trackUrl = `file://${trackUrl}`;
             }
 
-            // 3. Wahi data structure jo MusicPlayer expect kar raha hai
             const trackData = {
                 id: song.id.toString(),
                 url: trackUrl,

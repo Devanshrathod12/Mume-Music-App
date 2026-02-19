@@ -415,11 +415,11 @@ const MusicPlayer = () => {
                 <View style={styles.controlsContainer}>
                     
                     <TouchableOpacity onPress={skipToPrevious}>
-                         <Ionicons name="play-skip-back" size={30} color={theme.Black} />
+                         <Ionicons name="play-skip-back" size={24} color={theme.Black} />
                     </TouchableOpacity>
 
                     <TouchableOpacity onPress={seekBackward} style={styles.secondaryControl}>
-                         <Ionicons name="play-back-outline" size={30} color={theme.Black} />
+                         <Ionicons name="play-back-outline" size={24} color={theme.Black} />
                     </TouchableOpacity>
 
                     <TouchableOpacity 
@@ -428,18 +428,18 @@ const MusicPlayer = () => {
                     >
                         <Ionicons 
                             name={playing ? "pause" : "play"} 
-                            size={40} 
+                            size={35} 
                             color="#FFFFFF" 
                             style={{ marginLeft: playing ? 0 : 4 }} 
                         />
                     </TouchableOpacity>
 
                     <TouchableOpacity onPress={seekForward} style={styles.secondaryControl}>
-                         <Ionicons name="play-forward-outline" size={30} color={theme.Black} />
+                         <Ionicons name="play-forward-outline" size={24} color={theme.Black} />
                     </TouchableOpacity>
 
                     <TouchableOpacity onPress={skipToNext}>
-                         <Ionicons name="play-skip-forward" size={30} color={theme.Black} />
+                         <Ionicons name="play-skip-forward" size={24} color={theme.Black} />
                     </TouchableOpacity>
 
                 </View>
@@ -529,11 +529,12 @@ const styles = StyleSheet.create({
         flexDirection: 'row',
         alignItems: 'center',
         justifyContent: 'space-between',
+        marginHorizontal:scale(14)
     },
     playButton: {
-        width: scale(80),
-        height: scale(80),
-        borderRadius: 40,
+        width: scale(65),
+        height: scale(65),
+        borderRadius:scale(1000),
         justifyContent: 'center',
         alignItems: 'center',
         elevation: 10,
