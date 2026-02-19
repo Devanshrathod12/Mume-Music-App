@@ -4,21 +4,21 @@ import Ionicons from '@react-native-vector-icons/ionicons';
 import { useNavigation } from '@react-navigation/native';
 import TrackPlayer, { useActiveTrack, useIsPlaying } from 'react-native-track-player';
 
-// Apne styles import karo
-import colors from '../../Styles/colors'; 
+// Theme Context & Config
+import { useTheme } from '../../Context/ThemeContext'; 
 import { scale, verticalScale, textScale } from '../../Styles/StyleConfig'; 
 
 const { width } = Dimensions.get('window');
 
 const MiniPlayer = () => {
   const navigation = useNavigation();
-  const activeTrack = useActiveTrack(); // Kaunsa gana chal raha hai
-  const { playing } = useIsPlaying(); // Play hai ya Pause
+  const activeTrack = useActiveTrack(); 
+  const { playing } = useIsPlaying(); 
+  const { theme } = useTheme(); // 👈 Theme data access
 
-  // Agar koi gaana nahi hai, to kuch mat dikhao (Hidden)
   if (!activeTrack) return null;
 
-  // Functions
+  // --- Functions ---
   const togglePlayback = async () => {
       if (playing) {
           await TrackPlayer.pause();
@@ -28,19 +28,29 @@ const MiniPlayer = () => {
   };
 
   const handleSkipNext = async () => {
-      await TrackPlayer.skipToNext();
+      try {
+          await TrackPlayer.skipToNext();
+      } catch (error) {
+          console.log("End of queue");
+      }
   };
 
   return (
     <TouchableOpacity 
-      activeOpacity={0.9} 
-      style={styles.container}
-      // Pura strip click karne par MusicPlayer page khulega
+      activeOpacity={0.95} 
+      style={[
+        styles.container, 
+        { 
+          backgroundColor: theme.MiniPlayerBackground, // Dynamic BG
+          borderTopColor: theme.MiniPlayerBorder // Dynamic Border
+        }
+      ]}
       onPress={() => navigation.navigate('MusicPlayer')}
     >
       
-      {/* 1. Play Progress Bar (Optional Top Line - Orange) */}
-      <View style={{height: 2, backgroundColor: '#FF6B00', width: '20%'}} />
+      {/* 1. Play Progress Bar (Halka Orange line) */}
+      <View style={{height: 2, backgroundColor: theme.Primary, width: '100%', opacity: 0.3, position: 'absolute', top: 0}} />
+      <View style={{height: 2, backgroundColor: theme.Primary, width: '35%', position: 'absolute', top: 0}} />
 
       <View style={styles.contentRow}>
           
@@ -52,10 +62,10 @@ const MiniPlayer = () => {
 
           {/* Title & Artist */}
           <View style={styles.textContainer}>
-              <Text style={styles.title} numberOfLines={1}>
+              <Text style={[styles.title, { color: theme.HeadingColor }]} numberOfLines={1}>
                 {activeTrack?.title || "Unknown Title"}
               </Text>
-              <Text style={styles.artist} numberOfLines={1}>
+              <Text style={[styles.artist, { color: theme.SecondaryText }]} numberOfLines={1}>
                 {activeTrack?.artist || "Unknown Artist"}
               </Text>
           </View>
@@ -64,20 +74,23 @@ const MiniPlayer = () => {
           <View style={styles.controls}>
               
               {/* Play/Pause Button */}
-              <TouchableOpacity onPress={(e) => { e.stopPropagation(); togglePlayback(); }}>
+              <TouchableOpacity 
+                style={styles.iconBtn}
+                onPress={(e) => { e.stopPropagation(); togglePlayback(); }}
+              >
                   <Ionicons 
                     name={playing ? "pause" : "play"} 
                     size={28} 
-                    color={"#FF6B00"} 
+                    color={theme.Primary} 
                   />
               </TouchableOpacity>
 
               {/* Next Button */}
               <TouchableOpacity 
-                style={{ marginLeft: 15 }} 
+                style={[styles.iconBtn, { marginLeft: scale(10) }]} 
                 onPress={(e) => { e.stopPropagation(); handleSkipNext(); }}
               >
-                  <Ionicons name="play-skip-forward" size={28}  color={"#FF6B00"} />
+                  <Ionicons name="play-skip-forward" size={24} color={theme.Primary} />
               </TouchableOpacity>
 
           </View>
@@ -91,20 +104,18 @@ export default MiniPlayer;
 
 const styles = StyleSheet.create({
   container: {
-    backgroundColor: '#FFFFFF', // Ya halka sa grey '#F9FAFB'
     width: '100%',
     height: verticalScale(65),
     borderTopWidth: 1,
-    borderTopColor: '#E2E8F0', // Thin border line above tabs
     justifyContent: 'center',
-    elevation: 10, // Shadow for Android
+    elevation: 20, 
     shadowColor: "#000",
-    shadowOffset: { width: 0, height: -3 }, // Shadow goes up
-    shadowOpacity: 0.1,
-    shadowRadius: 3,
-    position: 'absolute', // Ye important hai "floating" feel ke liye
-    bottom: 65, // BottomTab ki height jitna upar (tabBarStyle.height)
-    zIndex: 100 // Sabse upar dikhne ke liye
+    shadowOffset: { width: 0, height: -5 },
+    shadowOpacity: 0.15,
+    shadowRadius: 5,
+    position: 'absolute', 
+    bottom: 65, // Tab bar ke theek upar
+    zIndex: 999 
   },
   contentRow: {
     flexDirection: 'row',
@@ -116,8 +127,8 @@ const styles = StyleSheet.create({
   image: {
     width: scale(45),
     height: scale(45),
-    borderRadius: 8,
-    backgroundColor: '#eee'
+    borderRadius: 12, // Thoda zyada rounded for modern look
+    backgroundColor: 'rgba(0,0,0,0.1)'
   },
   textContainer: {
     flex: 1,
@@ -126,17 +137,20 @@ const styles = StyleSheet.create({
   },
   title: {
     fontSize: textScale(14),
-    fontWeight: '600',
-    color: colors.HeadingColor || '#000',
+    fontWeight: '700', // Thoda bold
     marginBottom: 2
   },
   artist: {
-    fontSize: textScale(12),
-    color: '#64748B' // Grey
+    fontSize: textScale(11),
+    fontWeight: '500'
   },
   controls: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginRight: scale(5)
+  },
+  iconBtn: {
+      padding: scale(5),
+      justifyContent: 'center',
+      alignItems: 'center'
   }
 });

@@ -30,6 +30,11 @@ export default function MainScreen(Stack) {
          component={Screen.ArtistSongList}
          options={{ headerShown: false }}
         />
+        <Stack.Screen 
+         name={NavigationString.DownloadsSongs}
+         component={Screen.DownloadsSongs}
+         options={{ headerShown: false }}
+        />
         </>
    
     );

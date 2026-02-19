@@ -1,19 +1,305 @@
+// import React, { useState, useEffect } from 'react';
+// import {
+//     StyleSheet, Text, View, TextInput, FlatList,
+//     TouchableOpacity, Image, ActivityIndicator, Keyboard
+// } from 'react-native';
+// import Ionicons from '@react-native-vector-icons/ionicons';
+// import axios from 'axios';
+// import { useSafeAreaInsets } from 'react-native-safe-area-context';
+// import { scale, verticalScale, moderateScale, textScale } from '../Styles/StyleConfig';
+// import colors from '../Styles/colors';
+
+// // Track Player Integration
+// import TrackPlayer, { useActiveTrack, useIsPlaying } from 'react-native-track-player';
+
+// const SearchingScreen = ({ navigation }) => {
+//     const insets = useSafeAreaInsets();
+//     const activeTrack = useActiveTrack();
+//     const { playing } = useIsPlaying();
+
+//     const [searchInput, setSearchInput] = useState('');
+//     const [searchQuery, setSearchQuery] = useState('');
+//     const [activeTab, setActiveTab] = useState('Songs');
+//     const [loading, setLoading] = useState(false);
+//     const [isSearched, setIsSearched] = useState(false); // New state to track if search is done
+
+//     const [recentSearches, setRecentSearches] = useState(['Ariana Grande', 'Drake', 'Memories']);
+//     const [results, setResults] = useState([]);
+
+//     const tabs = ["Songs", "Artists", "Albums"];
+
+//     const handleSearch = async (query, tab = activeTab) => {
+//         if (!query.trim()) return;
+        
+//         setLoading(true);
+//         setSearchQuery(query);
+//         setIsSearched(true); // Search trigger hote hi UI change hoga
+        
+//         if (!recentSearches.includes(query)) {
+//             setRecentSearches(prev => [query, ...prev].slice(0, 10));
+//         }
+
+//         try {
+//             let endpoint = "https://saavn.sumit.co/api/search/songs";
+//             if (tab === "Artists") endpoint = "https://saavn.sumit.co/api/search/artists";
+//             if (tab === "Albums") endpoint = "https://saavn.sumit.co/api/search/albums";
+
+//             const res = await axios.get(endpoint, { params: { query: query, limit: 20 } });
+//             setResults(res.data?.data?.results || []);
+//         } catch (error) {
+//             console.log("Search Error:", error);
+//             setResults([]);
+//         } finally {
+//             setLoading(false);
+//             Keyboard.dismiss();
+//         }
+//     };
+
+//     // Jab input clear karein toh wapas default state mein le aayein
+//     const handleClear = () => {
+//         setSearchInput('');
+//         setIsSearched(false);
+//         setSearchQuery('');
+//         setResults([]);
+//     };
+
+//     const getImageUrl = (item) => {
+//         if (!item?.image || item.image.length === 0) return 'https://via.placeholder.com/150';
+//         return item.image[item.image.length - 1]?.url;
+//     };
+
+//     const handlePlayPause = async (item) => {
+//         const trackUrl = item?.downloadUrl?.[item.downloadUrl.length - 1]?.url;
+//         if (!trackUrl) return;
+
+//         if (activeTrack?.id === item.id) {
+//             playing ? await TrackPlayer.pause() : await TrackPlayer.play();
+//         } else {
+//             await TrackPlayer.reset();
+//             await TrackPlayer.add({
+//                 id: item.id,
+//                 url: trackUrl,
+//                 title: item.name,
+//                 artist: item?.artists?.primary?.[0]?.name || "Unknown",
+//                 artwork: getImageUrl(item),
+//             });
+//             await TrackPlayer.play();
+//         }
+//     };
+
+//     // Sub-renders components...
+//     const renderRecentSection = () => (
+//         <View style={styles.sectionContainer}>
+//             <View style={styles.recentHeader}>
+//                 <Text style={styles.sectionTitle}>Recent Searches</Text>
+//                 <TouchableOpacity onPress={() => setRecentSearches([])}>
+//                     <Text style={styles.clearAllText}>Clear All</Text>
+//                 </TouchableOpacity>
+//             </View>
+//             <FlatList
+//                 data={recentSearches}
+//                 keyExtractor={(item, index) => index.toString()}
+//                 renderItem={({ item }) => (
+//                     <TouchableOpacity style={styles.recentItem} onPress={() => {setSearchInput(item); handleSearch(item)}}>
+//                         <Text style={styles.recentItemText}>{item}</Text>
+//                         <Ionicons name="close-outline" size={20} color={colors.SecondaryText} />
+//                     </TouchableOpacity>
+//                 )}
+//             />
+//         </View>
+//     );
+
+//     const renderResultItem = ({ item }) => {
+//         const isActive = activeTrack?.id === item.id;
+//         return (
+//             <View style={styles.songRow}>
+//                 <Image source={{ uri: getImageUrl(item) }} style={[styles.itemImage, activeTab === "Artists" && { borderRadius: 50 }]} />
+//                 <View style={styles.itemInfo}>
+//                     <Text style={[styles.itemTitle, isActive && { color: colors.Primary }]} numberOfLines={1}>{item.name}</Text>
+//                     <Text style={styles.itemSubtitle}>{activeTab === "Artists" ? "Artist" : item?.artists?.primary?.[0]?.name || "Unknown"}</Text>
+//                 </View>
+//                 {activeTab === "Songs" && (
+//                     <TouchableOpacity onPress={() => handlePlayPause(item)}>
+//                         <Ionicons 
+//                             name={isActive && playing ? "pause-circle" : "play-circle"} 
+//                             size={moderateScale(35)} 
+//                             color={colors.Primary} 
+//                         />
+//                     </TouchableOpacity>
+//                 )}
+//                 <Ionicons name="ellipsis-vertical" size={20} color={colors.SecondaryText} style={{ marginLeft: scale(10) }} />
+//             </View>
+//         );
+//     };
+
+//     return (
+//         <View style={[styles.container, { paddingTop: insets.top }]}>
+//             {/* Header Search Bar */}
+//             <View style={styles.header}>
+//                 <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backBtn}>
+//                     <Ionicons name="arrow-back-outline" size={24} color={colors.Black} />
+//                 </TouchableOpacity>
+
+//                 {/* DYNAMIC INPUT BOX STYLE */}
+//                 <View style={[
+//                     styles.inputContainer, 
+//                     isSearched ? styles.searchedInputBox : styles.activeInputBox
+//                 ]}>
+//                     <Ionicons 
+//                         name="search" 
+//                         size={18} 
+//                         color={isSearched ? "#888" : colors.Primary} // Icon Color Change
+//                         style={{ marginRight: 8 }} 
+//                     />
+//                     <TextInput
+//                         placeholder="Search songs, artists..."
+//                         style={styles.textInput}
+//                         value={searchInput}
+//                         onChangeText={(text) => {
+//                             setSearchInput(text);
+//                             if(text === "") setIsSearched(false);
+//                         }}
+//                         onSubmitEditing={() => handleSearch(searchInput)}
+//                         returnKeyType="search"
+//                     />
+//                     {searchInput.length > 0 && (
+//                         <TouchableOpacity onPress={handleClear}>
+//                             <Ionicons name="close-circle" size={18} color={colors.SecondaryText} />
+//                         </TouchableOpacity>
+//                     )}
+//                 </View>
+//             </View>
+
+//             {/* Results / Recent Section logic remains same... */}
+//             {!searchQuery ? (
+//                 renderRecentSection()
+//             ) : (
+//                 <View style={{ flex: 1 }}>
+//                     <View style={styles.tabsWrapper}>
+//                         {tabs.map(tab => (
+//                             <TouchableOpacity
+//                                 key={tab}
+//                                 style={[styles.tabBtn, activeTab === tab && styles.activeTabBtn]}
+//                                 onPress={() => { setActiveTab(tab); handleSearch(searchQuery, tab); }}
+//                             >
+//                                 <Text style={[styles.tabText, activeTab === tab && styles.activeTabText]}>{tab}</Text>
+//                             </TouchableOpacity>
+//                         ))}
+//                     </View>
+
+//                     {loading ? (
+//                         <ActivityIndicator size="large" color={colors.Primary} style={{ marginTop: 50 }} />
+//                     ) : results.length > 0 ? (
+//                         <FlatList
+//                             data={results}
+//                             keyExtractor={(item) => item.id}
+//                             renderItem={renderResultItem}
+//                             contentContainerStyle={styles.listContainer}
+//                         />
+//                     ) : (
+//                         <View style={styles.notFoundContainer}>
+//                              <View style={styles.sadFaceCircle}>
+//                                 <View style={styles.eyesRow}><View style={styles.eye} /><View style={styles.eye} /></View>
+//                                 <View style={styles.sadMouth} />
+//                              </View>
+//                             <Text style={styles.notFoundTitle}>Not Found</Text>
+//                             <Text style={styles.notFoundSub}>Sorry, the keyword you entered cannot be found, please check again or search with another keyword..</Text>
+//                         </View>
+//                     )}
+//                 </View>
+//             )}
+//         </View>
+//     );
+// };
+
+// export default SearchingScreen;
+
+// const styles = StyleSheet.create({
+//     container: { flex: 1, backgroundColor: colors.WhiteBackground },
+//     header: {
+//         flexDirection: 'row',
+//         alignItems: 'center',
+//         paddingHorizontal: scale(15),
+//         paddingVertical: verticalScale(10)
+//     },
+//     backBtn: { marginRight: scale(10) },
+    
+//     // Base style for Input Container
+//     inputContainer: {
+//         flex: 1,
+//         flexDirection: 'row',
+//         alignItems: 'center',
+//         borderRadius: 12,
+//         paddingHorizontal: scale(12),
+//         height: verticalScale(45),
+//     },
+//     // Case 1: Searching (Orange Border)
+//     activeInputBox: {
+//         backgroundColor: '#F9FAFB',
+//         borderWidth: 1,
+//         borderColor: colors.Primary,
+//     },
+//     // Case 2: Searched (Light Orange Background, No Border)
+//     searchedInputBox: {
+//         backgroundColor: '#FFF5F0', // Light orange background
+//         borderWidth: 0,
+//     },
+
+//     textInput: { flex: 1, fontSize: textScale(14), color: colors.Black },
+    
+//     // List, Tabs, and other styles remain the same...
+//     sectionContainer: { paddingHorizontal: scale(20), marginTop: verticalScale(15) },
+//     recentHeader: { flexDirection: 'row', justifyContent: 'space-between', marginBottom: 15 },
+//     sectionTitle: { fontSize: textScale(18), fontWeight: 'bold', color: colors.HeadingColor },
+//     clearAllText: { fontSize: textScale(14), color: colors.Primary, fontWeight: '600' },
+//     recentItem: { flexDirection: 'row', justifyContent: 'space-between', paddingVertical: 12 },
+//     recentItemText: { fontSize: textScale(15), color: '#6B7280' },
+//     tabsWrapper: { flexDirection: 'row', paddingHorizontal: scale(15), marginTop: 15 },
+//     tabBtn: {
+//         paddingHorizontal: scale(20),
+//         paddingVertical: 8,
+//         borderRadius: 20,
+//         borderWidth: 1,
+//         borderColor: colors.Primary,
+//         marginRight: 10
+//     },
+//     activeTabBtn: { backgroundColor: colors.Primary },
+//     tabText: { color: colors.Primary, fontWeight: '600' },
+//     activeTabText: { color: 'white' },
+//     listContainer: { paddingHorizontal: scale(20), paddingTop: 20, paddingBottom: 100 },
+//     songRow: { flexDirection: 'row', alignItems: 'center', marginBottom: verticalScale(15) },
+//     itemImage: { width: moderateScale(60), height: moderateScale(60), borderRadius: 15, backgroundColor: '#E5E7EB' },
+//     itemInfo: { flex: 1, marginLeft: scale(12) },
+//     itemTitle: { fontSize: textScale(16), fontWeight: 'bold', color: colors.Black },
+//     itemSubtitle: { fontSize: textScale(13), color: colors.SecondaryText, marginTop: 4 },
+//     notFoundContainer: { flex: 1, alignItems: 'center', paddingHorizontal: 40, marginTop: verticalScale(80) },
+//     sadFaceCircle: { 
+//         width: 150, height: 150, borderRadius: 75, backgroundColor: '#F97316', 
+//         justifyContent: 'center', alignItems: 'center', marginBottom: 30 
+//     },
+//     eyesRow: { flexDirection: 'row', justifyContent: 'space-around', width: '50%', marginBottom: 15 },
+//     eye: { width: 15, height: 10, borderRadius: 5, backgroundColor: '#1F2937' },
+//     sadMouth: { width: 40, height: 15, borderRadius: 10, borderTopWidth: 5, borderColor: '#1F2937' },
+//     notFoundTitle: { fontSize: textScale(22), fontWeight: 'bold', color: '#111827', marginBottom: 10 },
+//     notFoundSub: { fontSize: textScale(14), textAlign: 'center', color: '#6B7280', lineHeight: 22 }
+// });
 import React, { useState, useEffect } from 'react';
 import {
     StyleSheet, Text, View, TextInput, FlatList,
-    TouchableOpacity, Image, ActivityIndicator, Keyboard
+    TouchableOpacity, Image, ActivityIndicator, Keyboard, StatusBar
 } from 'react-native';
 import Ionicons from '@react-native-vector-icons/ionicons';
 import axios from 'axios';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { scale, verticalScale, moderateScale, textScale } from '../Styles/StyleConfig';
-import colors from '../Styles/colors';
 
-// Track Player Integration
+// Theme & Config
+import { useTheme } from '../Context/ThemeContext'; // 👈 Theme Access
+import { scale, verticalScale, moderateScale, textScale } from '../Styles/StyleConfig';
 import TrackPlayer, { useActiveTrack, useIsPlaying } from 'react-native-track-player';
 
 const SearchingScreen = ({ navigation }) => {
     const insets = useSafeAreaInsets();
+    const { theme } = useTheme(); // 👈 Theme liya
     const activeTrack = useActiveTrack();
     const { playing } = useIsPlaying();
 
@@ -21,7 +307,7 @@ const SearchingScreen = ({ navigation }) => {
     const [searchQuery, setSearchQuery] = useState('');
     const [activeTab, setActiveTab] = useState('Songs');
     const [loading, setLoading] = useState(false);
-    const [isSearched, setIsSearched] = useState(false); // New state to track if search is done
+    const [isSearched, setIsSearched] = useState(false);
 
     const [recentSearches, setRecentSearches] = useState(['Ariana Grande', 'Drake', 'Memories']);
     const [results, setResults] = useState([]);
@@ -33,7 +319,7 @@ const SearchingScreen = ({ navigation }) => {
         
         setLoading(true);
         setSearchQuery(query);
-        setIsSearched(true); // Search trigger hote hi UI change hoga
+        setIsSearched(true);
         
         if (!recentSearches.includes(query)) {
             setRecentSearches(prev => [query, ...prev].slice(0, 10));
@@ -55,7 +341,6 @@ const SearchingScreen = ({ navigation }) => {
         }
     };
 
-    // Jab input clear karein toh wapas default state mein le aayein
     const handleClear = () => {
         setSearchInput('');
         setIsSearched(false);
@@ -87,13 +372,12 @@ const SearchingScreen = ({ navigation }) => {
         }
     };
 
-    // Sub-renders components...
     const renderRecentSection = () => (
         <View style={styles.sectionContainer}>
             <View style={styles.recentHeader}>
-                <Text style={styles.sectionTitle}>Recent Searches</Text>
+                <Text style={[styles.sectionTitle, { color: theme.HeadingColor }]}>Recent Searches</Text>
                 <TouchableOpacity onPress={() => setRecentSearches([])}>
-                    <Text style={styles.clearAllText}>Clear All</Text>
+                    <Text style={[styles.clearAllText, { color: theme.Primary }]}>Clear All</Text>
                 </TouchableOpacity>
             </View>
             <FlatList
@@ -101,8 +385,8 @@ const SearchingScreen = ({ navigation }) => {
                 keyExtractor={(item, index) => index.toString()}
                 renderItem={({ item }) => (
                     <TouchableOpacity style={styles.recentItem} onPress={() => {setSearchInput(item); handleSearch(item)}}>
-                        <Text style={styles.recentItemText}>{item}</Text>
-                        <Ionicons name="close-outline" size={20} color={colors.SecondaryText} />
+                        <Text style={[styles.recentItemText, { color: theme.SecondaryText }]}>{item}</Text>
+                        <Ionicons name="close-outline" size={20} color={theme.SecondaryText} />
                     </TouchableOpacity>
                 )}
             />
@@ -113,47 +397,50 @@ const SearchingScreen = ({ navigation }) => {
         const isActive = activeTrack?.id === item.id;
         return (
             <View style={styles.songRow}>
-                <Image source={{ uri: getImageUrl(item) }} style={[styles.itemImage, activeTab === "Artists" && { borderRadius: 50 }]} />
+                <Image source={{ uri: getImageUrl(item) }} style={[styles.itemImage, activeTab === "Artists" && { borderRadius: 50 }, { backgroundColor: theme.LightGray }]} />
                 <View style={styles.itemInfo}>
-                    <Text style={[styles.itemTitle, isActive && { color: colors.Primary }]} numberOfLines={1}>{item.name}</Text>
-                    <Text style={styles.itemSubtitle}>{activeTab === "Artists" ? "Artist" : item?.artists?.primary?.[0]?.name || "Unknown"}</Text>
+                    <Text style={[styles.itemTitle, { color: isActive ? theme.Primary : theme.HeadingColor }]} numberOfLines={1}>{item.name}</Text>
+                    <Text style={[styles.itemSubtitle, { color: theme.SecondaryText }]}>{activeTab === "Artists" ? "Artist" : item?.artists?.primary?.[0]?.name || "Unknown"}</Text>
                 </View>
                 {activeTab === "Songs" && (
                     <TouchableOpacity onPress={() => handlePlayPause(item)}>
                         <Ionicons 
                             name={isActive && playing ? "pause-circle" : "play-circle"} 
                             size={moderateScale(35)} 
-                            color={colors.Primary} 
+                            color={theme.Primary} 
                         />
                     </TouchableOpacity>
                 )}
-                <Ionicons name="ellipsis-vertical" size={20} color={colors.SecondaryText} style={{ marginLeft: scale(10) }} />
+                <Ionicons name="ellipsis-vertical" size={20} color={theme.SecondaryText} style={{ marginLeft: scale(10) }} />
             </View>
         );
     };
 
     return (
-        <View style={[styles.container, { paddingTop: insets.top }]}>
-            {/* Header Search Bar */}
+        <View style={[styles.container, { backgroundColor: theme.WhiteBackground, paddingTop: insets.top }]}>
+            <StatusBar barStyle={theme.WhiteBackground === '#FFFFFF' ? "dark-content" : "light-content"} backgroundColor={theme.WhiteBackground} />
+            
             <View style={styles.header}>
                 <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backBtn}>
-                    <Ionicons name="arrow-back-outline" size={24} color={colors.Black} />
+                    <Ionicons name="arrow-back-outline" size={24} color={theme.Black} />
                 </TouchableOpacity>
 
-                {/* DYNAMIC INPUT BOX STYLE */}
                 <View style={[
                     styles.inputContainer, 
-                    isSearched ? styles.searchedInputBox : styles.activeInputBox
+                    isSearched 
+                        ? { backgroundColor: theme.WhiteBackground === '#FFFFFF' ? '#FFF5F0' : theme.CardBackground, borderWidth: 0 } 
+                        : { backgroundColor: theme.MainBackground, borderWidth: 1, borderColor: theme.Primary }
                 ]}>
                     <Ionicons 
                         name="search" 
                         size={18} 
-                        color={isSearched ? "#888" : colors.Primary} // Icon Color Change
+                        color={isSearched ? theme.SecondaryText : theme.Primary} 
                         style={{ marginRight: 8 }} 
                     />
                     <TextInput
                         placeholder="Search songs, artists..."
-                        style={styles.textInput}
+                        placeholderTextColor={theme.SecondaryText}
+                        style={[styles.textInput, { color: theme.Black }]}
                         value={searchInput}
                         onChangeText={(text) => {
                             setSearchInput(text);
@@ -164,13 +451,12 @@ const SearchingScreen = ({ navigation }) => {
                     />
                     {searchInput.length > 0 && (
                         <TouchableOpacity onPress={handleClear}>
-                            <Ionicons name="close-circle" size={18} color={colors.SecondaryText} />
+                            <Ionicons name="close-circle" size={18} color={theme.SecondaryText} />
                         </TouchableOpacity>
                     )}
                 </View>
             </View>
 
-            {/* Results / Recent Section logic remains same... */}
             {!searchQuery ? (
                 renderRecentSection()
             ) : (
@@ -179,31 +465,39 @@ const SearchingScreen = ({ navigation }) => {
                         {tabs.map(tab => (
                             <TouchableOpacity
                                 key={tab}
-                                style={[styles.tabBtn, activeTab === tab && styles.activeTabBtn]}
+                                style={[
+                                    styles.tabBtn, 
+                                    { borderColor: theme.Primary },
+                                    activeTab === tab && { backgroundColor: theme.Primary }
+                                ]}
                                 onPress={() => { setActiveTab(tab); handleSearch(searchQuery, tab); }}
                             >
-                                <Text style={[styles.tabText, activeTab === tab && styles.activeTabText]}>{tab}</Text>
+                                <Text style={[
+                                    styles.tabText, 
+                                    { color: activeTab === tab ? '#FFF' : theme.Primary }
+                                ]}>{tab}</Text>
                             </TouchableOpacity>
                         ))}
                     </View>
 
                     {loading ? (
-                        <ActivityIndicator size="large" color={colors.Primary} style={{ marginTop: 50 }} />
+                        <ActivityIndicator size="large" color={theme.Primary} style={{ marginTop: 50 }} />
                     ) : results.length > 0 ? (
                         <FlatList
                             data={results}
                             keyExtractor={(item) => item.id}
                             renderItem={renderResultItem}
                             contentContainerStyle={styles.listContainer}
+                            showsVerticalScrollIndicator={false}
                         />
                     ) : (
                         <View style={styles.notFoundContainer}>
-                             <View style={styles.sadFaceCircle}>
+                             <View style={[styles.sadFaceCircle, { backgroundColor: theme.Primary }]}>
                                 <View style={styles.eyesRow}><View style={styles.eye} /><View style={styles.eye} /></View>
                                 <View style={styles.sadMouth} />
                              </View>
-                            <Text style={styles.notFoundTitle}>Not Found</Text>
-                            <Text style={styles.notFoundSub}>Sorry, the keyword you entered cannot be found, please check again or search with another keyword..</Text>
+                            <Text style={[styles.notFoundTitle, { color: theme.HeadingColor }]}>Not Found</Text>
+                            <Text style={[styles.notFoundSub, { color: theme.SecondaryText }]}>Sorry, the keyword you entered cannot be found, please search with another keyword.</Text>
                         </View>
                     )}
                 </View>
@@ -215,7 +509,7 @@ const SearchingScreen = ({ navigation }) => {
 export default SearchingScreen;
 
 const styles = StyleSheet.create({
-    container: { flex: 1, backgroundColor: colors.WhiteBackground },
+    container: { flex: 1 },
     header: {
         flexDirection: 'row',
         alignItems: 'center',
@@ -223,8 +517,6 @@ const styles = StyleSheet.create({
         paddingVertical: verticalScale(10)
     },
     backBtn: { marginRight: scale(10) },
-    
-    // Base style for Input Container
     inputContainer: {
         flex: 1,
         flexDirection: 'row',
@@ -233,53 +525,36 @@ const styles = StyleSheet.create({
         paddingHorizontal: scale(12),
         height: verticalScale(45),
     },
-    // Case 1: Searching (Orange Border)
-    activeInputBox: {
-        backgroundColor: '#F9FAFB',
-        borderWidth: 1,
-        borderColor: colors.Primary,
-    },
-    // Case 2: Searched (Light Orange Background, No Border)
-    searchedInputBox: {
-        backgroundColor: '#FFF5F0', // Light orange background
-        borderWidth: 0,
-    },
-
-    textInput: { flex: 1, fontSize: textScale(14), color: colors.Black },
-    
-    // List, Tabs, and other styles remain the same...
+    textInput: { flex: 1, fontSize: textScale(14) },
     sectionContainer: { paddingHorizontal: scale(20), marginTop: verticalScale(15) },
     recentHeader: { flexDirection: 'row', justifyContent: 'space-between', marginBottom: 15 },
-    sectionTitle: { fontSize: textScale(18), fontWeight: 'bold', color: colors.HeadingColor },
-    clearAllText: { fontSize: textScale(14), color: colors.Primary, fontWeight: '600' },
+    sectionTitle: { fontSize: textScale(18), fontWeight: 'bold' },
+    clearAllText: { fontSize: textScale(14), fontWeight: '600' },
     recentItem: { flexDirection: 'row', justifyContent: 'space-between', paddingVertical: 12 },
-    recentItemText: { fontSize: textScale(15), color: '#6B7280' },
+    recentItemText: { fontSize: textScale(15) },
     tabsWrapper: { flexDirection: 'row', paddingHorizontal: scale(15), marginTop: 15 },
     tabBtn: {
         paddingHorizontal: scale(20),
         paddingVertical: 8,
         borderRadius: 20,
         borderWidth: 1,
-        borderColor: colors.Primary,
         marginRight: 10
     },
-    activeTabBtn: { backgroundColor: colors.Primary },
-    tabText: { color: colors.Primary, fontWeight: '600' },
-    activeTabText: { color: 'white' },
+    tabText: { fontWeight: '600' },
     listContainer: { paddingHorizontal: scale(20), paddingTop: 20, paddingBottom: 100 },
     songRow: { flexDirection: 'row', alignItems: 'center', marginBottom: verticalScale(15) },
-    itemImage: { width: moderateScale(60), height: moderateScale(60), borderRadius: 15, backgroundColor: '#E5E7EB' },
+    itemImage: { width: moderateScale(60), height: moderateScale(60), borderRadius: 15 },
     itemInfo: { flex: 1, marginLeft: scale(12) },
-    itemTitle: { fontSize: textScale(16), fontWeight: 'bold', color: colors.Black },
-    itemSubtitle: { fontSize: textScale(13), color: colors.SecondaryText, marginTop: 4 },
+    itemTitle: { fontSize: textScale(16), fontWeight: 'bold' },
+    itemSubtitle: { fontSize: textScale(13), marginTop: 4 },
     notFoundContainer: { flex: 1, alignItems: 'center', paddingHorizontal: 40, marginTop: verticalScale(80) },
     sadFaceCircle: { 
-        width: 150, height: 150, borderRadius: 75, backgroundColor: '#F97316', 
+        width: 150, height: 150, borderRadius: 75, 
         justifyContent: 'center', alignItems: 'center', marginBottom: 30 
     },
     eyesRow: { flexDirection: 'row', justifyContent: 'space-around', width: '50%', marginBottom: 15 },
     eye: { width: 15, height: 10, borderRadius: 5, backgroundColor: '#1F2937' },
     sadMouth: { width: 40, height: 15, borderRadius: 10, borderTopWidth: 5, borderColor: '#1F2937' },
-    notFoundTitle: { fontSize: textScale(22), fontWeight: 'bold', color: '#111827', marginBottom: 10 },
-    notFoundSub: { fontSize: textScale(14), textAlign: 'center', color: '#6B7280', lineHeight: 22 }
+    notFoundTitle: { fontSize: textScale(22), fontWeight: 'bold', marginBottom: 10 },
+    notFoundSub: { fontSize: textScale(14), textAlign: 'center', lineHeight: 22 }
 });

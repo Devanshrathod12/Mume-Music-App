@@ -7,6 +7,7 @@ import ArtistSongList from "../Screens/ArtistSongList"
 import Favorites from "../Screens/Favorites"
 import Playlists from "../Screens/Playlists"
 import Setting from "../Screens/Setting"
+import DownloadsSongs from "../Screens/DownloadsSongs"
 
 
 export default {
@@ -18,6 +19,7 @@ export default {
      Favorites:"Favorites",
      Playlists:"Playlists",
      Setting:"Setting",
+     DownloadsSongs:"DownloadsSongs",
     
 
 }
