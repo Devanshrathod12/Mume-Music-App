@@ -6,15 +6,13 @@ import React, { useEffect, useState } from 'react'
 import Ionicons from '@react-native-vector-icons/ionicons'
 import { useNavigation, useRoute } from '@react-navigation/native'
 import axios from 'axios'
-import AsyncStorage from '@react-native-async-storage/async-storage'; // IMPORT ASYNC STORAGE
+import AsyncStorage from '@react-native-async-storage/async-storage'; 
 import TrackPlayer, { useActiveTrack, useIsPlaying } from 'react-native-track-player';
 
 // Imports
 import colors from '../Styles/colors'
 import { scale, verticalScale, textScale, width, moderateScale } from '../Styles/StyleConfig'
 import SongDetailsModal from '../Components/Modal/SongDetailsModal'; 
-// Import Navigation String Constant agar tumhare paas hai, varna direct string use karo
-// import NavigationString from '../Navigation/NavigationString' 
 
 const AlbamSongList = () => {
   const navigation = useNavigation();
@@ -61,10 +59,8 @@ const AlbamSongList = () => {
   // --- STORAGE HELPER ---
   const saveQueueToStorage = async (queueData, currentIndex) => {
     try {
-        // Saving Current Queue for future Mini Player
         await AsyncStorage.setItem('mini_player_queue', JSON.stringify(queueData));
         await AsyncStorage.setItem('last_played_index', String(currentIndex));
-        console.log("Queue Saved to AsyncStorage");
     } catch (error) {
         console.log("Error Saving Queue:", error);
     }
@@ -87,42 +83,49 @@ const AlbamSongList = () => {
      return `${min}:${sec}`;
   };
 
-  // --- PLAY LOGIC ---
+  // --- PLAY LOGIC UPDATED ---
 
-  // 1. Single Song Play
   const handlePlayPause = async (item) => {
     const trackUrl = getAudioUrl(item);
     if (!trackUrl) return;
 
     if (activeTrack?.id === item.id) {
+        // Agar wahi gaana chal raha hai toh sirf navigate karo
         playing ? await TrackPlayer.pause() : await TrackPlayer.play();
+        navigation.navigate('MusicPlayer'); 
     } else {
         try {
-          const trackData = {
-              id: item.id,
-              url: trackUrl,
-              title: item.name,
-              artist: item?.artists?.primary?.[0]?.name || "Unknown",
-              artwork: getImageUrl(item.image),
-              duration: item.duration
-          };
+            // 1. Poore Album ki list taiyar karo
+            const tracksToAdd = songs.map(s => ({
+                id: s.id,
+                url: getAudioUrl(s),
+                title: s.name,
+                artist: s?.artists?.primary?.[0]?.name || "Unknown",
+                artwork: getImageUrl(s.image),
+                duration: s.duration
+            })).filter(t => t.url);
 
-          await TrackPlayer.reset();
-          await TrackPlayer.add(trackData);
-          await TrackPlayer.play();
-          
-          // Save single song as queue
-          saveQueueToStorage([trackData], 0);
+            // 2. Clicked song ka index nikalo
+            const clickedIndex = tracksToAdd.findIndex(t => t.id === item.id);
+
+            await TrackPlayer.reset();
+            await TrackPlayer.add(tracksToAdd);
+            await TrackPlayer.skip(clickedIndex); // Usi gaane par jump karo jo click hua hai
+            await TrackPlayer.play();
+            
+            // 3. Storage update karo (for MiniPlayer and Persistence)
+            saveQueueToStorage(tracksToAdd, clickedIndex);
+
+            // 4. Music Player pe navigate karo
+            navigation.navigate('MusicPlayer');
 
         } catch(e) { console.log("Player Error", e); }
     }
   };
 
-  // 2. Play All & NAVIGATE TO MUSIC PLAYER
   const handlePlayAll = async () => {
       if(songs.length === 0) return;
       
-      // Convert API songs to Track Player objects
       const tracksToAdd = songs.map(s => ({
         id: s.id,
         url: getAudioUrl(s),
@@ -139,18 +142,10 @@ const AlbamSongList = () => {
         await TrackPlayer.add(tracksToAdd);
         await TrackPlayer.play();
         
-        // Save full queue
         saveQueueToStorage(tracksToAdd, 0);
-
-        // --- NAVIGATION TO MUSIC PLAYER PAGE ---
-        navigation.navigate('MusicPlayer'); // Yaha naam same rakhna jo App.js/Navigation me diya hai
+        navigation.navigate('MusicPlayer'); 
 
       } catch(e) { console.log(e); }
-  };
-
-  const handlePlayNext = async (songItem) => {
-     // (Same logic as before...)
-     // ... logic hidden for brevity since user already has it
   };
 
   const openDetails = (item) => {
@@ -162,7 +157,6 @@ const AlbamSongList = () => {
     <SafeAreaView style={styles.container}>
       <StatusBar barStyle="dark-content" backgroundColor="#FFFFFF" />
       
-      {/* Header */}
       <View style={styles.header}>
         <TouchableOpacity onPress={() => navigation.goBack()}>
             <Ionicons name="arrow-back" size={26} color={colors.Black} />
@@ -205,7 +199,6 @@ const AlbamSongList = () => {
                       <Text style={styles.btnShuffleText}>Shuffle</Text>
                   </TouchableOpacity>
 
-                  {/* Play Button - This triggers navigation now */}
                   <TouchableOpacity style={[styles.actionButton, styles.btnPlay]} onPress={handlePlayAll}>
                       <Ionicons name="play-circle" size={22} color="#FF6B00" style={{marginRight: 8}} />
                       <Text style={styles.btnPlayText}>Play</Text>
@@ -214,7 +207,8 @@ const AlbamSongList = () => {
           </View>
 
           <View style={styles.sectionHeader}>
-              <Text style={styles.sectionTitle}>Songs by {albumData?.artists?.primary?.[0]?.name || "Artist"}</Text>
+              <Text style={styles.sectionTitle}>Songs</Text>
+              <Text style={styles.seesectionTitle}>See All</Text>
           </View>
 
           {loading ? (
@@ -271,9 +265,8 @@ const AlbamSongList = () => {
   )
 }
 
-export default AlbamSongList
+export default AlbamSongList;
 
-// ... (Styles same as before)
 const styles = StyleSheet.create({
     container: { flex: 1, backgroundColor: '#FFFFFF' },
     header: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: scale(20), paddingVertical: verticalScale(15) },
@@ -292,7 +285,8 @@ const styles = StyleSheet.create({
     btnPlay: { backgroundColor: '#FFF7ED', borderWidth: 1, borderColor: '#FFEDD5' },
     btnPlayText: { color: '#FF6B00', fontSize: textScale(16), fontWeight: '600' },
     sectionHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingHorizontal: scale(20), marginBottom: verticalScale(15) },
-    sectionTitle: { fontSize: textScale(18), fontWeight: 'bold', color: '#000' },
+    sectionTitle: { fontSize: textScale(16), fontWeight: 'bold', color: '#000' },
+    seesectionTitle: { fontSize: textScale(16), fontWeight: 'bold', color:colors.lightornge },
     songsList: { paddingHorizontal: scale(20) },
     songRow: { flexDirection: 'row', alignItems: 'center', marginBottom: verticalScale(15), padding: scale(5) },
     songImage: { width: moderateScale(50), height: moderateScale(50), borderRadius: 12, marginRight: scale(15), backgroundColor: '#f0f0f0' },
@@ -300,4 +294,4 @@ const styles = StyleSheet.create({
     songTitle: { fontSize: textScale(15), fontWeight: 'bold', color: '#1E293B', marginBottom: 3 },
     songArtist: { fontSize: textScale(12), color: '#94A3B8', fontWeight: '500' },
     songActions: { flexDirection: 'row', alignItems: 'center' },
-})
+});

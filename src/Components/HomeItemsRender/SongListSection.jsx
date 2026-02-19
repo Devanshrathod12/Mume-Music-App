@@ -1,6 +1,7 @@
 import { StyleSheet, Text, View, FlatList, Image, TouchableOpacity } from 'react-native'
-import React, { useState } from 'react' // Import useState
+import React, { useState } from 'react'
 import Ionicons from '@react-native-vector-icons/ionicons'
+import AsyncStorage from '@react-native-async-storage/async-storage'; // 👈 Added
 import colors from '../../Styles/colors'
 import { scale, verticalScale, moderateScale, textScale } from '../../Styles/StyleConfig'
 
@@ -11,7 +12,6 @@ import TrackPlayer, { useActiveTrack, useIsPlaying } from 'react-native-track-pl
 import SongDetailsModal from '../../Components/Modal/SongDetailsModal';
 
 const SongListSection = ({ data }) => {
-  
   const activeTrack = useActiveTrack();
   const { playing } = useIsPlaying();
   
@@ -19,7 +19,20 @@ const SongListSection = ({ data }) => {
   const [modalVisible, setModalVisible] = useState(false);
   const [selectedSong, setSelectedSong] = useState(null);
 
-  // --- HELPERS (Same as before) ---
+  // --- STORAGE HELPER (Consistent with Album/Artist) ---
+  const saveQueueToStorage = async (queueData, currentIndex) => {
+    try {
+        await AsyncStorage.setItem('mini_player_queue', JSON.stringify(queueData));
+        await AsyncStorage.setItem('last_played_index', String(currentIndex));
+        
+        // Agar aap Redux use kar rahe hain toh yahan dispatch bhi kar sakte hain:
+        // dispatch(setGlobalQueue(queueData)); 
+    } catch (error) {
+        console.log("Error Saving Section Queue:", error);
+    }
+  };
+
+  // --- HELPERS ---
   const getImageUrl = (images) => {
     if (!images || images.length === 0) return 'https://via.placeholder.com/150';
     return images.find(img => img.quality === '500x500')?.url || images[images.length - 1]?.url;
@@ -33,7 +46,7 @@ const SongListSection = ({ data }) => {
     return `${artistNames}  |  ${duration} mins`;
   };
 
-  // --- PLAY/PAUSE LOGIC (Direct on Song Row) ---
+  // --- PLAY/PAUSE LOGIC (With Queue Persistence) ---
   const handlePlayPause = async (item) => {
       const trackUrl = getAudioUrl(item);
       if (!trackUrl) return;
@@ -42,21 +55,32 @@ const SongListSection = ({ data }) => {
           playing ? await TrackPlayer.pause() : await TrackPlayer.play();
       } else {
           try {
+            // 1. Convert current list data to TrackPlayer format
+            const tracksToAdd = data.map(s => ({
+                id: s.id,
+                url: getAudioUrl(s),
+                title: s.name,
+                artist: s?.artists?.primary?.[0]?.name || "Unknown",
+                artwork: getImageUrl(s.image),
+                duration: s.duration
+            })).filter(t => t.url);
+
+            // 2. Clicked song ka index dhoondo
+            const clickedIndex = tracksToAdd.findIndex(t => t.id === item.id);
+
             await TrackPlayer.reset();
-            await TrackPlayer.add({
-                id: item.id,
-                url: trackUrl,
-                title: item.name,
-                artist: item?.artists?.primary?.[0]?.name || "Unknown",
-                artwork: getImageUrl(item.image),
-            });
+            await TrackPlayer.add(tracksToAdd);
+            await TrackPlayer.skip(clickedIndex); // Seedha clicked song par jump
             await TrackPlayer.play();
-          } catch(e) { console.log(e); }
+
+            // 3. Save to Storage for Next/Previous functionality
+            saveQueueToStorage(tracksToAdd, clickedIndex);
+
+          } catch(e) { console.log("Section Player Error:", e); }
       }
   };
 
-  // --- LOGIC: HANDLE "PLAY NEXT" from Modal ---
-  // Simple logic: insert song at next index
+  // --- LOGIC: HANDLE "PLAY NEXT" ---
   const handlePlayNext = async (songItem) => {
       const trackUrl = getAudioUrl(songItem);
       if(!trackUrl) return;
@@ -67,16 +91,17 @@ const SongListSection = ({ data }) => {
         title: songItem.name,
         artist: songItem.artists?.primary?.[0]?.name || "Unknown",
         artwork: getImageUrl(songItem.image),
+        duration: songItem.duration
       };
 
       try {
-        // Current index ke baad insert karo
         const currentIndex = await TrackPlayer.getActiveTrackIndex();
-        if (currentIndex !== undefined) {
+        if (currentIndex !== undefined && currentIndex !== null) {
             await TrackPlayer.add(newTrack, currentIndex + 1);
             console.log("Added to Play Next:", songItem.name);
+            
+            // Note: Storage update optional here, usually done on major queue changes
         } else {
-            // Agar kuch play nahi ho raha to directly play kar do
             handlePlayPause(songItem);
         }
       } catch (error) {
@@ -84,10 +109,9 @@ const SongListSection = ({ data }) => {
       }
   };
 
-  // --- OPEN MODAL HANDLER ---
   const openDetails = (item) => {
-      setSelectedSong(item); // Song ka data set kiya
-      setModalVisible(true); // Modal dikhaya
+      setSelectedSong(item);
+      setModalVisible(true);
   };
 
   const renderItem = ({ item }) => {
@@ -96,8 +120,6 @@ const SongListSection = ({ data }) => {
 
     return (
       <View style={[styles.songRow, isActive && { backgroundColor: '#F3F4F6', borderRadius: 12 }]}>
-         
-         {/* Row Click -> Plays Music (Optional) */}
          <TouchableOpacity 
             style={{ flexDirection: 'row', flex: 1, alignItems: 'center' }}
             onPress={() => handlePlayPause(item)} 
@@ -110,13 +132,11 @@ const SongListSection = ({ data }) => {
             </View>
          </TouchableOpacity>
 
-         {/* Actions Area */}
          <View style={styles.songActions}>
               <TouchableOpacity onPress={() => handlePlayPause(item)}>
                   <Ionicons name={iconName} size={32} color={colors.Primary} />
               </TouchableOpacity>
               
-              {/* Three Dots -> Opens DETAILS MODAL */}
               <TouchableOpacity 
                  style={{ marginLeft: scale(15), padding: 5 }} 
                  onPress={() => openDetails(item)}
@@ -138,7 +158,6 @@ const SongListSection = ({ data }) => {
             showsVerticalScrollIndicator={false}
         />
 
-        {/* MODAL CALL (Screen ke neeche mounted hai) */}
         <SongDetailsModal 
             visible={modalVisible}
             song={selectedSong}
@@ -149,7 +168,7 @@ const SongListSection = ({ data }) => {
   )
 }
 
-export default SongListSection
+export default SongListSection;
 
 const styles = StyleSheet.create({
   listContent: { 
@@ -189,4 +208,4 @@ const styles = StyleSheet.create({
     color: colors.SecondaryText, 
     fontWeight: '500' 
   },
-})
+});

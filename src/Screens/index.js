@@ -2,3 +2,8 @@
 export {default as Home } from "../Screens/Home"
 export {default as AlbamSongList } from "../Screens/AlbamSongList"
 export {default as MusicPlayer } from "../Screens/MusicPlayer"
+export {default as SearchingScreen } from "../Screens/SearchingScreen"
+export {default as ArtistSongList } from "../Screens/ArtistSongList"
+export {default as Setting } from "../Screens/Setting"
+export {default as Playlists } from "../Screens/Playlists"
+export {default as Favorites } from "../Screens/Favorites"

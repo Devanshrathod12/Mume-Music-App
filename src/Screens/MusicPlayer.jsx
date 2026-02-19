@@ -1,20 +1,20 @@
-import React, { useState, useEffect } from 'react';
+import React from 'react';
 import { 
     StyleSheet, Text, View, Image, TouchableOpacity, 
     SafeAreaView, StatusBar, Dimensions 
 } from 'react-native';
 import Ionicons from '@react-native-vector-icons/ionicons';
-
 import { useNavigation } from '@react-navigation/native';
 import TrackPlayer, { 
     useActiveTrack, 
     useIsPlaying, 
     useProgress 
 } from 'react-native-track-player';
+import Slider from '@react-native-community/slider'; // IMP: Install kiya hua package
 
 // Imports
-import colors from '../Styles/colors'; // Adjust path
-import { scale, verticalScale, textScale } from '../Styles/StyleConfig'; // Adjust path
+import colors from '../Styles/colors'; // Apne path ke hisaab se check karna
+import { scale, verticalScale, textScale } from '../Styles/StyleConfig';
 
 const { width } = Dimensions.get('window');
 
@@ -22,19 +22,19 @@ const MusicPlayer = () => {
     const navigation = useNavigation();
     
     // Track Player Hooks
-    const activeTrack = activeTrackData = useActiveTrack();
+    const activeTrack = useActiveTrack();
     const { playing } = useIsPlaying();
-    const { position, duration } = useProgress();
+    const { position, duration } = useProgress(); // Current Time & Total Time
 
-    // Helper: Format Time (00:00)
+    // --- HELPER: Format Time ---
     const formatTime = (seconds) => {
-        if (!seconds || isNaN(seconds)) return '00:00';
+        if (!seconds || isNaN(seconds) || seconds < 0) return '00:00';
         const mins = Math.floor(seconds / 60);
         const secs = Math.floor(seconds % 60);
         return `${mins < 10 ? '0' : ''}${mins}:${secs < 10 ? '0' : ''}${secs}`;
     };
 
-    // --- CONTROLS LOGIC ---
+    // --- ACTIONS ---
     
     const togglePlayback = async () => {
         if (playing) {
@@ -52,18 +52,22 @@ const MusicPlayer = () => {
         await TrackPlayer.skipToPrevious();
     };
 
+    // -10 Seconds
     const seekBackward = async () => {
         const newPos = position - 10;
         await TrackPlayer.seekTo(newPos > 0 ? newPos : 0);
     };
 
+    // +10 Seconds
     const seekForward = async () => {
         const newPos = position + 10;
         await TrackPlayer.seekTo(newPos < duration ? newPos : duration);
     };
 
-    // Progress Bar Calculation
-    const progressPercent = duration > 0 ? (position / duration) * 100 : 0;
+    // ** Slider Change Logic (Jab user slider khinchega) **
+    const onSlidingComplete = async (value) => {
+        await TrackPlayer.seekTo(value);
+    };
 
     return (
         <SafeAreaView style={styles.container}>
@@ -72,17 +76,17 @@ const MusicPlayer = () => {
             {/* --- HEADER --- */}
             <View style={styles.header}>
                 <TouchableOpacity onPress={() => navigation.goBack()}>
-                    <Ionicons name="arrow-back-outline" size={30} color={colors.Black} />
+                    <Ionicons name="chevron-down-outline" size={32} color={colors.Black} />
                 </TouchableOpacity>
                 <TouchableOpacity>
-                    <Ionicons name="ellipsis-horizontal-circle" size={30}  />
+                    <Ionicons name="ellipsis-horizontal-circle" size={30} color={colors.Black} />
                 </TouchableOpacity>
             </View>
 
             {/* --- MAIN CONTENT --- */}
             <View style={styles.contentContainer}>
                 
-                {/* 1. ARTWORK */}
+                {/* 1. ARTWORK (Shadow & Image) */}
                 <View style={styles.artworkWrapper}>
                     <Image 
                         source={{ uri: activeTrack?.artwork || 'https://via.placeholder.com/300' }} 
@@ -92,7 +96,7 @@ const MusicPlayer = () => {
 
                 {/* 2. TRACK INFO */}
                 <View style={styles.trackInfoContainer}>
-                    <View>
+                    <View style={{flex: 1}}>
                         <Text style={styles.trackTitle} numberOfLines={1}>
                             {activeTrack?.title || "No Song Playing"}
                         </Text>
@@ -100,19 +104,21 @@ const MusicPlayer = () => {
                             {activeTrack?.artist || "Unknown Artist"}
                         </Text>
                     </View>
-                    <TouchableOpacity>
-                        <Ionicons name="heart-outline" size={28} color={colors.Black} />
-                    </TouchableOpacity>
                 </View>
 
-                {/* 3. PROGRESS BAR */}
+                {/* 3. SLIDER / PROGRESS BAR */}
                 <View style={styles.progressBarContainer}>
-                    {/* Visual Slider using View */}
-                    <View style={styles.progressBackground}>
-                        <View style={[styles.progressFill, { width: `${progressPercent}%` }]} />
-                        {/* Knob */}
-                        <View style={[styles.progressKnob, { left: `${progressPercent}%` }]} />
-                    </View>
+                    {/* Draggable Slider Component */}
+                    <Slider
+                        style={{width: '100%', height: 40}}
+                        value={position}
+                        minimumValue={0}
+                        maximumValue={duration}
+                        minimumTrackTintColor="#FF6B00" // Played (Orange)
+                        maximumTrackTintColor="#E2E8F0" // Remaining (Grey)
+                        thumbTintColor="#FF6B00"        // Circle Handle
+                        onSlidingComplete={onSlidingComplete} 
+                    />
                     
                     <View style={styles.timeRow}>
                         <Text style={styles.timeText}>{formatTime(position)}</Text>
@@ -123,7 +129,7 @@ const MusicPlayer = () => {
                 {/* 4. MAIN CONTROLS */}
                 <View style={styles.controlsContainer}>
                     
-                    {/* Previous Song */}
+                    {/* Prev Song */}
                     <TouchableOpacity onPress={skipToPrevious}>
                          <Ionicons name="play-skip-back" size={30} color={colors.Black} />
                     </TouchableOpacity>
@@ -133,7 +139,7 @@ const MusicPlayer = () => {
                          <Ionicons name="play-back-outline" size={30} color={colors.Black} />
                     </TouchableOpacity>
 
-                    {/* PLAY / PAUSE (Big Orange) */}
+                    {/* Play/Pause Button */}
                     <TouchableOpacity onPress={togglePlayback} style={styles.playButton}>
                         <Ionicons 
                             name={playing ? "pause" : "play"} 
@@ -155,12 +161,12 @@ const MusicPlayer = () => {
 
                 </View>
 
-                {/* 5. BOTTOM ACTIONS (Timer, Lyrics, Cast, Menu) */}
+                {/* 5. BOTTOM ICONS */}
                 <View style={styles.bottomIcons}>
                     <Ionicons name="time-outline" size={24} color={colors.Black} />
                     <Ionicons name="musical-notes-outline" size={24} color={colors.Black} />
                     <Ionicons name="radio-outline" size={24} color={colors.Black} />
-                    <Ionicons name="ellipsis-vertical" size={24} color={colors.Black} />
+                    <Ionicons name="list-outline" size={24} color={colors.Black} />
                 </View>
 
             </View>
@@ -180,7 +186,7 @@ const styles = StyleSheet.create({
         alignItems: 'center',
         justifyContent: 'space-between',
         paddingHorizontal: scale(20),
-        paddingVertical: verticalScale(10),
+        paddingVertical: verticalScale(15),
     },
     headerTitle: {
         fontSize: textScale(18),
@@ -196,8 +202,8 @@ const styles = StyleSheet.create({
     
     // Artwork
     artworkWrapper: {
-        width: width - scale(50),
-        height: width - scale(50),
+        width: width - scale(60),
+        height: width - scale(60),
         borderRadius: 30,
         elevation: 10,
         shadowColor: '#FF6B00',
@@ -206,7 +212,7 @@ const styles = StyleSheet.create({
         shadowRadius: 10,
         backgroundColor: '#F5F5F5',
         alignSelf: 'center',
-        overflow: 'hidden' // Important for image radius
+        overflow: 'hidden' 
     },
     artwork: {
         width: '100%',
@@ -219,13 +225,13 @@ const styles = StyleSheet.create({
         flexDirection: 'row',
         justifyContent: 'space-between',
         alignItems: 'center',
-        marginTop: verticalScale(10)
+        marginTop: verticalScale(10),
+        paddingHorizontal: scale(5)
     },
     trackTitle: {
         fontSize: textScale(24),
         fontWeight: 'bold',
         color: colors.HeadingColor,
-        maxWidth: width * 0.7,
         marginBottom: 4
     },
     trackArtist: {
@@ -238,34 +244,11 @@ const styles = StyleSheet.create({
     progressBarContainer: {
         marginTop: verticalScale(20),
     },
-    progressBackground: {
-        width: '100%',
-        height: 5,
-        backgroundColor: '#E2E8F0',
-        borderRadius: 5,
-        flexDirection: 'row',
-        alignItems: 'center',
-    },
-    progressFill: {
-        height: 5,
-        backgroundColor: '#FF6B00',
-        borderRadius: 5,
-    },
-    progressKnob: {
-        width: 14,
-        height: 14,
-        borderRadius: 14,
-        backgroundColor: '#FF6B00',
-        position: 'absolute',
-        marginLeft: -7, // center knob
-        borderWidth: 2,
-        borderColor: '#FFF',
-        elevation: 3
-    },
     timeRow: {
         flexDirection: 'row',
         justifyContent: 'space-between',
-        marginTop: verticalScale(8),
+        marginTop: -8, 
+        paddingHorizontal: scale(5)
     },
     timeText: {
         fontSize: textScale(12),
@@ -281,13 +264,13 @@ const styles = StyleSheet.create({
         marginTop: verticalScale(10),
     },
     secondaryControl: {
-        marginHorizontal: scale(10)
+        marginHorizontal: scale(5)
     },
     playButton: {
         width: scale(75),
         height: scale(75),
         borderRadius: 100,
-        backgroundColor: '#FF6B00', // Orange Theme
+        backgroundColor: '#FF6B00', // Orange
         justifyContent: 'center',
         alignItems: 'center',
         elevation: 8,

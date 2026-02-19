@@ -8,7 +8,8 @@ export default {
     SecondaryText: "#94A3B8", // Light Grey for artists/duration
     Black: "#0F172A",         // Darkest Black
     LightGray: "#F1F5F9",     // Background placeholder
-    Separator: "#E2E8F0"      // Light line colors
+    Separator: "#E2E8F0",
+    lightornge:"#FF6B00"      // Light line colors
 };
 // &nbsp space 
 // {"\n"} line space

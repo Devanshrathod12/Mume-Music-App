@@ -20,6 +20,16 @@ export default function MainScreen(Stack) {
          component={Screen.MusicPlayer}
          options={{ headerShown: false }}
         />
+        <Stack.Screen 
+         name={NavigationString.SearchingScreen}
+         component={Screen.SearchingScreen}
+         options={{ headerShown: false }}
+        />
+        <Stack.Screen 
+         name={NavigationString.ArtistSongList}
+         component={Screen.ArtistSongList}
+         options={{ headerShown: false }}
+        />
         </>
    
     );
