@@ -1,5 +1,3 @@
-Gemini said
-Here is the professional README.md for your project in full English. It is structured to showcase your technical expertise to other developers or potential employers.
 
 Mume Music Player
 Mume is a high-performance, modern Music Streaming and Offline Player application built with React Native. It features a seamless audio experience, centralized state management, and a robust local downloading system.
@@ -51,7 +49,7 @@ Slider Optimization: The playback slider uses a high-frequency update interval m
 Clone the Repository:
 
 Bash
-git clone https://github.com/your-username/mume-music-player.git
+git clone https://github.com/Devanshrathod12/Mume-Music-App
 cd Mume
 Install Dependencies:
 
