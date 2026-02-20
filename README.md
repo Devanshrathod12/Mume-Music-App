@@ -1,97 +1,78 @@
-This is a new [**React Native**](https://reactnative.dev) project, bootstrapped using [`@react-native-community/cli`](https://github.com/react-native-community/cli).
+Gemini said
+Here is the professional README.md for your project in full English. It is structured to showcase your technical expertise to other developers or potential employers.
 
-# Getting Started
+Mume Music Player
+Mume is a high-performance, modern Music Streaming and Offline Player application built with React Native. It features a seamless audio experience, centralized state management, and a robust local downloading system.
 
-> **Note**: Make sure you have completed the [Set Up Your Environment](https://reactnative.dev/docs/set-up-your-environment) guide before proceeding.
+🛠 Tech Stack & Core Libraries
+To ensure scalability and native-level performance, the following libraries were integrated:
 
-## Step 1: Start Metro
+Framework: React Native (Architecture optimized for 0.84)
 
-First, you will need to run **Metro**, the JavaScript build tool for React Native.
+Navigation: React Navigation (Stack & Tab integration)
 
-To start the Metro dev server, run the following command from the root of your React Native project:
+State Management: Redux Toolkit & React-Native-Async-Storage (For persistent user data and session management)
 
-```sh
-# Using npm
-npm start
+Audio Engine: React-Native-Track-Player (The industry standard for background audio services)
 
-# OR using Yarn
-yarn start
-```
+UI/UX Components:
 
-## Step 2: Build and run your app
+react-native-pager-view: Used for fluid, high-performance tab transitions.
 
-With Metro running, open a new terminal window/pane from the root of your React Native project, and use one of the following commands to build and run your Android or iOS app:
+@react-native-community/slider: Provides precise seekbar control for music playback.
 
-### Android
+react-native-safe-area-context: Handles notch and navigation bar spacing across all Android devices.
 
-```sh
-# Using npm
-npm run android
+Networking: Axios with a centralized API Wrapper for token-based authentication and error handling.
 
-# OR using Yarn
-yarn android
-```
+File Management: React-Native-FS: Implemented for offline music downloading and local storage management.
 
-### iOS
+🏗 Architecture
+The app follows a Modular Clean Architecture to decouple business logic from the UI:
 
-For iOS, remember to install CocoaPods dependencies (this only needs to be run on first clone or after updating native deps).
+View Layer: Built with functional components and hooks. Each section (Songs, Artists, Albums) is decoupled to prevent unnecessary re-renders.
 
-The first time you create a new project, run the Ruby bundler to install CocoaPods itself:
+Service Layer (Headless JS): The audio playback logic runs in a dedicated background service via Track Player, ensuring music continues even when the app is minimized.
 
-```sh
-bundle install
-```
+Data Layer: A centralized Axios utility (apiReq) handles all network requests, including automatic authorization header injection.
 
-Then, and every time you update your native dependencies, run:
+Persistent Storage: Combines Redux for runtime state and Async-Storage for long-term user preferences (like themes and tokens).
 
-```sh
-bundle exec pod install
-```
+⚖ Technical Trade-offs & Decisions
+PagerView vs. Standard ScrollViews: We chose react-native-pager-view over standard horizontal FlatLists to leverage native OS paging behavior, which significantly reduces "jank" during tab switching.
 
-For more information, please visit [CocoaPods Getting Started guide](https://guides.cocoapods.org/using/getting-started.html).
+Offline First Approach: By using react-native-fs, the app allows users to download tracks. This involved a trade-off in storage management logic to ensure downloaded files are correctly mapped to the UI without internet access.
 
-```sh
-# Using npm
-npm run ios
+Centralized API Utility: Instead of calling Axios directly in components, we implemented a global wrapper. This ensures that if the baseUrl or token logic changes, it only needs to be updated in one file.
 
-# OR using Yarn
-yarn ios
-```
+Slider Optimization: The playback slider uses a high-frequency update interval managed by the Track Player hooks to ensure the UI stays perfectly in sync with the audio buffer.
 
-If everything is set up correctly, you should see your new app running in the Android Emulator, iOS Simulator, or your connected device.
+🚀 Setup & Installation
+Clone the Repository:
 
-This is one way to run your app — you can also build it directly from Android Studio or Xcode.
+Bash
+git clone https://github.com/your-username/mume-music-player.git
+cd Mume
+Install Dependencies:
 
-## Step 3: Modify your app
+Bash
+npm install
+Run on Android:
 
-Now that you have successfully run the app, let's make changes!
+Bash
+npx react-native run-android
+Generate Production Build:
 
-Open `App.tsx` in your text editor of choice and make some changes. When you save, your app will automatically update and reflect these changes — this is powered by [Fast Refresh](https://reactnative.dev/docs/fast-refresh).
+Bash
+cd android
+./gradlew assembleRelease
+✨ Key Features
+Dynamic Dashboard: Real-time trending songs and artist suggestions.
 
-When you want to forcefully reload, for example to reset the state of your app, you can perform a full reload:
+Professional Audio Controls: Full support for play/pause, seek, shuffle, and repeat.
 
-- **Android**: Press the <kbd>R</kbd> key twice or select **"Reload"** from the **Dev Menu**, accessed via <kbd>Ctrl</kbd> + <kbd>M</kbd> (Windows/Linux) or <kbd>Cmd ⌘</kbd> + <kbd>M</kbd> (macOS).
-- **iOS**: Press <kbd>R</kbd> in iOS Simulator.
+Offline Downloader: Save your favorite tracks directly to your device storage.
 
-## Congratulations! :tada:
+Smart Sorting: Alphabetical sorting for large libraries of songs and albums.
 
-You've successfully run and modified your React Native App. :partying_face:
-
-### Now what?
-
-- If you want to add this new React Native code to an existing application, check out the [Integration guide](https://reactnative.dev/docs/integration-with-existing-apps).
-- If you're curious to learn more about React Native, check out the [docs](https://reactnative.dev/docs/getting-started).
-
-# Troubleshooting
-
-If you're having issues getting the above steps to work, see the [Troubleshooting](https://reactnative.dev/docs/troubleshooting) page.
-
-# Learn More
-
-To learn more about React Native, take a look at the following resources:
-
-- [React Native Website](https://reactnative.dev) - learn more about React Native.
-- [Getting Started](https://reactnative.dev/docs/environment-setup) - an **overview** of React Native and how setup your environment.
-- [Learn the Basics](https://reactnative.dev/docs/getting-started) - a **guided tour** of the React Native **basics**.
-- [Blog](https://reactnative.dev/blog) - read the latest official React Native **Blog** posts.
-- [`@facebook/react-native`](https://github.com/facebook/react-native) - the Open Source; GitHub **repository** for React Native.
+Theme Engine: Seamless switching between Light and Dark modes via Context API.
