@@ -5,6 +5,16 @@ import BottomTab from "./BottomTab"
 export default function MainScreen(Stack) {
     return (
         <>
+         <Stack.Screen 
+          name={NavigationString.InitalLoadScreen}
+          component={Screen.InitalLoadScreen}
+          options={{ headerShown: false }}
+         />
+         <Stack.Screen 
+          name={NavigationString.FinalLogoScreen}
+          component={Screen.FinalLogoScreen}
+          options={{ headerShown: false }}
+         />
         <Stack.Screen 
          name="BottomTab"
          component={BottomTab}

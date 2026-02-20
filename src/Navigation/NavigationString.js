@@ -8,6 +8,8 @@ import Favorites from "../Screens/Favorites"
 import Playlists from "../Screens/Playlists"
 import Setting from "../Screens/Setting"
 import DownloadsSongs from "../Screens/DownloadsSongs"
+import FinalLogoScreen from "../Screens/FinalLogoScreen"
+import InitalLoadScreen from "../Screens/InitalLoadScreen"
 
 
 export default {
@@ -20,6 +22,8 @@ export default {
      Playlists:"Playlists",
      Setting:"Setting",
      DownloadsSongs:"DownloadsSongs",
+     FinalLogoScreen:"FinalLogoScreen",
+     InitalLoadScreen:"InitalLoadScreen",
     
 
 }
