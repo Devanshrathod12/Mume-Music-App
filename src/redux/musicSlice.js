@@ -5,10 +5,10 @@ const musicSlice = createSlice({
   initialState: {
     favorites: [], 
     playlists: [], 
-    recentlyPlayed: [], // Naya section for suggestions/history
+    recentlyPlayed: [], 
   },
   reducers: {
-    // 1. Favorite toggle logic
+
     toggleFavorite: (state, action) => {
       const song = action.payload;
       const index = state.favorites.findIndex(item => item.id === song.id);
@@ -19,23 +19,18 @@ const musicSlice = createSlice({
       }
     },
 
-    // 2. Recently Played / Suggestions Logic
     addToRecentlyPlayed: (state, action) => {
       const song = action.payload;
-      // Pehle check karo ki kya ye gaana list mein pehle se hai?
       const existingIndex = state.recentlyPlayed.findIndex(item => item.id === song.id);
       
       if (existingIndex !== -1) {
-        // Agar hai, toh usey wahan se hata do taaki wo top par aa sake
         state.recentlyPlayed.splice(existingIndex, 1);
       }
 
-      // Gaane ko list ke shuruat (top) mein add karo
       state.recentlyPlayed.unshift(song);
 
-      // Limit rakhte hain 20 gaano ki taaki storage heavy na ho
       if (state.recentlyPlayed.length > 20) {
-        state.recentlyPlayed.pop(); // Sabse purana gaana hata do
+        state.recentlyPlayed.pop();
       }
     },
 

@@ -18,7 +18,7 @@ export const store = configureStore({
   reducer: persistedReducer,
   middleware: (getDefaultMiddleware) =>
     getDefaultMiddleware({
-      serializableCheck: false, // Persist errors hatane ke liye zaroori hai
+      serializableCheck: false,
     }),
 });
 
