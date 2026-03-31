@@ -24,7 +24,7 @@ const FinalLogoScreen = ({ navigation }) => {
         ]).start();
 
         const timer = setTimeout(() => {
-             navigation.navigate("BottomTab");
+             navigation.replace("BottomTab");
         }, 1200);
 
         return () => clearTimeout(timer);
