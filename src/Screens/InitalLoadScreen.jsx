@@ -12,7 +12,7 @@ const InitalLoadScreen = () => {
 
     useEffect(() => {
         const timer = setTimeout(() => {
-           navigation.navigate(NavigationString.FinalLogoScreen);
+           navigation.replace(NavigationString.FinalLogoScreen);
         }, 1500);
 
         return () => clearTimeout(timer);
