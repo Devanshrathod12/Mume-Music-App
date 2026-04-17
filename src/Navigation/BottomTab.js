@@ -17,6 +17,8 @@ import MiniPlayer from '../Components/MiniPlayer/MiniPlayer';
 
 const Tab = createBottomTabNavigator();
 
+// use theam is globly used for the light white and dark mod 
+
 // active lodaer form hear
 
 const BottomTab = () => {
