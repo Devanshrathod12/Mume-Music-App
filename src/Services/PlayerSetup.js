@@ -7,8 +7,9 @@ export const setupPlayer = async () => {
 
     // 2. Player Options (Notification bar & Lock screen controls)
     await TrackPlayer.updateOptions({
+       stopWithApp: false,
       android: {
-        appKilledPlaybackBehavior: AppKilledPlaybackBehavior.StopPlaybackAndRemoveNotification,
+        appKilledPlaybackBehavior: AppKilledPlaybackBehavior.ContinuePlayback,
       },
       capabilities: [
         Capability.Play,
