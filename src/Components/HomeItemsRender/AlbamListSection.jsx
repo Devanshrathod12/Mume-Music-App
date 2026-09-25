@@ -14,6 +14,7 @@ const AlbamListSection = ({ data }) => {
 
   const getImageUrl = (images) => {
     if (!images || images.length === 0) return 'https://via.placeholder.com/150';
+    if (typeof images === 'string') return images;
     const imgObj = images.find(img => img.quality === '500x500') || images.find(img => img.quality === '150x150') || images[images.length - 1];
     return imgObj?.url;
   };

@@ -72,9 +72,8 @@ const ArtistDetailsModal = ({ visible, onClose, artist, onPlayPress }) => {
 
   const getImageUrl = (images) => {
     if (!images || images.length === 0) return 'https://via.placeholder.com/150';
-    return Array.isArray(images) 
-      ? (images.find(img => img.quality === '500x500')?.url || images[images.length - 1]?.url)
-      : images;
+    if (typeof images === 'string') return images;
+    return images.find(img => img.quality === '500x500')?.url || images[images.length - 1]?.url;
   };
 
   const menuItems = [

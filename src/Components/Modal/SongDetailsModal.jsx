@@ -90,8 +90,9 @@ const SongDetailsModal = ({ visible, onClose, song, onPlayNext }) => {
   };
 
   const getImageUrl = (img) => {
-    if (!img) return 'https://via.placeholder.com/150';
-    return Array.isArray(img) ? (img.find(i => i.quality === '500x500')?.url || img[img.length - 1]?.url) : img;
+    if (!img || img.length === 0) return 'https://via.placeholder.com/150';
+    if (typeof img === 'string') return img;
+    return img.find(i => i.quality === '500x500')?.url || img[img.length - 1]?.url;
   };
 
   const getSubtitle = () => {

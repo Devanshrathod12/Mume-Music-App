@@ -4,6 +4,7 @@ import {
     StyleSheet, View, ActivityIndicator, TouchableOpacity, Text, StatusBar 
 } from 'react-native';
 import axios from 'axios';
+import { MusicApiSearch } from '../Api/MusicApi';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Ionicons from '@react-native-vector-icons/ionicons';
 import PagerView from 'react-native-pager-view';
@@ -56,37 +57,73 @@ const Home = () => {
         setLoadingMap(prev => ({ ...prev, [tabName]: true }));
         try {
             if (tabName === 'Suggested') {
-                const [songRes, artistRes] = await Promise.all([
-                    axios.get("https://saavn.sumit.co/api/search/songs", { params: { query: "trending", limit: 8 } }),
-                    axios.get("https://saavn.sumit.co/api/search/artists", { params: { query: "top", limit: 8 } })
-                ]);
+                const songs = await MusicApiSearch("trending");
 
-                const songs = songRes.data?.data?.results || [];
-                const artists = artistRes.data?.data?.results || [];
+                const artistsMap = new Map();
+                songs.forEach(song => {
+                    if (song.artists && song.artists.primary) {
+                        song.artists.primary.forEach(artist => {
+                            if (artist.name && !artistsMap.has(artist.name)) {
+                                artistsMap.set(artist.name, {
+                                    id: artist.id || artist.name,
+                                    name: artist.name,
+                                    image: song.image,
+                                    type: 'artist'
+                                });
+                            }
+                        });
+                    }
+                });
+                const artists = Array.from(artistsMap.values()).slice(0, 8);
 
                 setAllData(prev => ({
                     ...prev,
                     Suggested: {
-                        recentlyPlayed: songs,
+                        recentlyPlayed: songs.slice(0, 8),
                         artists: artists,
                         mostPlayed: [...songs].reverse().slice(0, 4)
                     }
                 }));
             } else {
-                let endpoint = "https://saavn.sumit.co/api/search/songs";
                 let query = "latest";
-                let limit = 50;
+                if (tabName === 'Albums') query = "trending albums";
+                if (tabName === 'Artists') query = "latest artists";
 
-                if (tabName === 'Albums') {
-                    endpoint = "https://saavn.sumit.co/api/search/albums";
-                    query = "trending";
-                } else if (tabName === 'Artists') {
-                    endpoint = "https://saavn.sumit.co/api/search/artists";
-                    query = "latest";
-                } 
+                const data = await MusicApiSearch(query);
 
-                const res = await axios.get(endpoint, { params: { query, limit } });
-                const results = res.data?.data?.results || [];
+                let results = data;
+                if (tabName === 'Artists') {
+                    const artistsMap = new Map();
+                    data.forEach(song => {
+                        if (song.artists && song.artists.primary) {
+                            song.artists.primary.forEach(artist => {
+                                if (artist.name && !artistsMap.has(artist.name)) {
+                                    artistsMap.set(artist.name, {
+                                        id: artist.id || artist.name,
+                                        name: artist.name,
+                                        image: song.image,
+                                        type: 'artist'
+                                    });
+                                }
+                            });
+                        }
+                    });
+                    results = Array.from(artistsMap.values());
+                } else if (tabName === 'Albums') {
+                    const albumsMap = new Map();
+                    data.forEach(song => {
+                        if (song.album && song.album.name && !albumsMap.has(song.album.id)) {
+                            albumsMap.set(song.album.id, {
+                                id: song.album.id,
+                                name: song.album.name,
+                                image: song.image,
+                                type: 'album'
+                            });
+                        }
+                    });
+                    results = Array.from(albumsMap.values());
+                }
+
                 setAllData(prev => ({
                     ...prev,
                     [tabName]: results  

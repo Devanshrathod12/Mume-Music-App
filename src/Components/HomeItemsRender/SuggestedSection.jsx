@@ -32,7 +32,7 @@ const SuggestedSection = ({ suggestedData }) => {
     };
 
     const getImageUrl = (images) => {
-        if (!images) return 'https://via.placeholder.com/150';
+        if (!images || images.length === 0) return 'https://via.placeholder.com/150';
         if (typeof images === 'string') return images;
         return images.find(img => img.quality === '500x500')?.url || images[images.length - 1]?.url;
     };

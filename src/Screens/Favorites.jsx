@@ -41,6 +41,7 @@ const Favorites = () => {
         title: item.name,
         artist: item?.artists?.primary?.[0]?.name || "Unknown",
         artwork: item?.image?.[item.image.length - 1]?.url || 'https://via.placeholder.com/150',
+        duration: Number(item.duration) || 0
       });
       await TrackPlayer.play();
     } catch (e) {

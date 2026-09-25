@@ -14,24 +14,8 @@ const DownloadsSongs = () => {
 
     useEffect(() => {
         loadDownloads();
-        setupPlayer();
     }, []);
 
-    const setupPlayer = async () => {
-        try {
-            await TrackPlayer.setupPlayer();
-            await TrackPlayer.updateOptions({
-                capabilities: [
-                    Capability.Play, 
-                    Capability.Pause, 
-                    Capability.SkipToNext, 
-                    Capability.SkipToPrevious, 
-                    Capability.Stop,
-                    Capability.SeekTo
-                ],
-            });
-        } catch (e) {}
-    };
 
     const loadDownloads = async () => {
         try {
@@ -73,6 +57,7 @@ const DownloadsSongs = () => {
                 artwork: Array.isArray(song.image) 
                     ? song.image[song.image.length - 1].url 
                     : song.image || 'https://via.placeholder.com/300',
+                duration: Number(song.duration) || 0
             };
 
             // 4. Track add karein aur play karein

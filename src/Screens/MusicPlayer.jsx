@@ -1,15 +1,14 @@
-
 import React from 'react';
-import { 
-    StyleSheet, Text, View, Image, TouchableOpacity, 
-    SafeAreaView, StatusBar, Dimensions 
+import {
+    StyleSheet, Text, View, Image, TouchableOpacity,
+    SafeAreaView, StatusBar, Dimensions
 } from 'react-native';
 import Ionicons from '@react-native-vector-icons/ionicons';
 import { useNavigation } from '@react-navigation/native';
-import TrackPlayer, { 
-    useActiveTrack, 
-    useIsPlaying, 
-    useProgress 
+import TrackPlayer, {
+    useActiveTrack,
+    useIsPlaying,
+    useProgress
 } from 'react-native-track-player';
 import Slider from '@react-native-community/slider';
 
@@ -22,7 +21,7 @@ const { width } = Dimensions.get('window');
 const MusicPlayer = () => {
     const navigation = useNavigation();
     const { theme } = useTheme(); // 👈 Context se theme liya
-    
+
     const activeTrack = useActiveTrack();
     const { playing } = useIsPlaying();
     const { position, duration } = useProgress();
@@ -66,9 +65,9 @@ const MusicPlayer = () => {
 
     return (
         <SafeAreaView style={[styles.container, { backgroundColor: theme.WhiteBackground }]}>
-            <StatusBar 
-                barStyle={theme.WhiteBackground === '#FFFFFF' ? "dark-content" : "light-content"} 
-                backgroundColor={theme.WhiteBackground} 
+            <StatusBar
+                barStyle={theme.WhiteBackground === '#FFFFFF' ? "dark-content" : "light-content"}
+                backgroundColor={theme.WhiteBackground}
             />
 
             {/* --- HEADER --- */}
@@ -83,18 +82,18 @@ const MusicPlayer = () => {
 
             {/* --- MAIN CONTENT --- */}
             <View style={styles.contentContainer}>
-                
+
                 {/* 1. ARTWORK */}
                 <View style={[styles.artworkWrapper, { shadowColor: theme.Primary, backgroundColor: theme.CardBackground }]}>
-                    <Image 
-                        source={{ uri: activeTrack?.artwork || 'https://via.placeholder.com/300' }} 
-                        style={styles.artwork} 
+                    <Image
+                        source={{ uri: activeTrack?.artwork || 'https://via.placeholder.com/300' }}
+                        style={styles.artwork}
                     />
                 </View>
 
                 {/* 2. TRACK INFO */}
                 <View style={styles.trackInfoContainer}>
-                    <View style={{flex: 1}}>
+                    <View style={{ flex: 1 }}>
                         <Text style={[styles.trackTitle, { color: theme.HeadingColor }]} numberOfLines={1}>
                             {activeTrack?.title || "No Song Playing"}
                         </Text>
@@ -107,16 +106,16 @@ const MusicPlayer = () => {
                 {/* 3. SLIDER / PROGRESS BAR */}
                 <View style={styles.progressBarContainer}>
                     <Slider
-                        style={{width: '100%', height: 40}}
+                        style={{ width: '100%', height: 40 }}
                         value={position}
                         minimumValue={0}
                         maximumValue={duration}
-                        minimumTrackTintColor={theme.Primary} 
-                        maximumTrackTintColor={theme.Separator} 
+                        minimumTrackTintColor={theme.Primary}
+                        maximumTrackTintColor={theme.Separator}
                         thumbTintColor={theme.Primary}
-                        onSlidingComplete={onSlidingComplete} 
+                        onSlidingComplete={onSlidingComplete}
                     />
-                    
+
                     <View style={styles.timeRow}>
                         <Text style={[styles.timeText, { color: theme.SecondaryText }]}>{formatTime(position)}</Text>
                         <Text style={[styles.timeText, { color: theme.SecondaryText }]}>{formatTime(duration)}</Text>
@@ -125,33 +124,33 @@ const MusicPlayer = () => {
 
                 {/* 4. MAIN CONTROLS */}
                 <View style={styles.controlsContainer}>
-                    
+
                     <TouchableOpacity onPress={skipToPrevious}>
-                         <Ionicons name="play-skip-back" size={24} color={theme.Black} />
+                        <Ionicons name="play-skip-back" size={24} color={theme.Black} />
                     </TouchableOpacity>
 
                     <TouchableOpacity onPress={seekBackward} style={styles.secondaryControl}>
-                         <Ionicons name="play-back-outline" size={24} color={theme.Black} />
+                        <Ionicons name="play-back-outline" size={24} color={theme.Black} />
                     </TouchableOpacity>
 
-                    <TouchableOpacity 
-                        onPress={togglePlayback} 
+                    <TouchableOpacity
+                        onPress={togglePlayback}
                         style={[styles.playButton, { backgroundColor: theme.Primary, shadowColor: theme.Primary }]}
                     >
-                        <Ionicons 
-                            name={playing ? "pause" : "play"} 
-                            size={35} 
-                            color="#FFFFFF" 
-                            style={{ marginLeft: playing ? 0 : 4 }} 
+                        <Ionicons
+                            name={playing ? "pause" : "play"}
+                            size={35}
+                            color="#FFFFFF"
+                            style={{ marginLeft: playing ? 0 : 4 }}
                         />
                     </TouchableOpacity>
 
                     <TouchableOpacity onPress={seekForward} style={styles.secondaryControl}>
-                         <Ionicons name="play-forward-outline" size={24} color={theme.Black} />
+                        <Ionicons name="play-forward-outline" size={24} color={theme.Black} />
                     </TouchableOpacity>
 
                     <TouchableOpacity onPress={skipToNext}>
-                         <Ionicons name="play-skip-forward" size={24} color={theme.Black} />
+                        <Ionicons name="play-skip-forward" size={24} color={theme.Black} />
                     </TouchableOpacity>
 
                 </View>
@@ -201,7 +200,7 @@ const styles = StyleSheet.create({
         shadowOpacity: 0.4,
         shadowRadius: 15,
         alignSelf: 'center',
-        overflow: 'hidden' 
+        overflow: 'hidden'
     },
     artwork: {
         width: '100%',
@@ -230,7 +229,7 @@ const styles = StyleSheet.create({
     timeRow: {
         flexDirection: 'row',
         justifyContent: 'space-between',
-        marginTop: -5, 
+        marginTop: -5,
         paddingHorizontal: scale(5)
     },
     timeText: {
@@ -241,12 +240,12 @@ const styles = StyleSheet.create({
         flexDirection: 'row',
         alignItems: 'center',
         justifyContent: 'space-between',
-        marginHorizontal:scale(14)
+        marginHorizontal: scale(14)
     },
     playButton: {
         width: scale(65),
         height: scale(65),
-        borderRadius:scale(1000),
+        borderRadius: scale(1000),
         justifyContent: 'center',
         alignItems: 'center',
         elevation: 10,

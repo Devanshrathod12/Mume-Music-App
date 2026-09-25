@@ -107,7 +107,7 @@ const AlbamSongList = () => {
                 title: s.name,
                 artist: s?.artists?.primary?.[0]?.name || "Unknown",
                 artwork: getImageUrl(s.image),
-                duration: s.duration
+                duration: Number(s.duration) || 0
             })).filter(t => t.url);
 
             const clickedIndex = tracksToAdd.findIndex(t => t.id === item.id);
@@ -131,7 +131,7 @@ const AlbamSongList = () => {
         title: s.name,
         artist: s.artists?.primary?.[0]?.name || "Unknown",
         artwork: getImageUrl(s.image),
-        duration: s.duration
+        duration: Number(s.duration) || 0
       })).filter(t => t.url);
 
       if(tracksToAdd.length === 0) return;
@@ -155,7 +155,7 @@ const AlbamSongList = () => {
         title: s.name,
         artist: s.artists?.primary?.[0]?.name || "Unknown",
         artwork: getImageUrl(s.image),
-        duration: s.duration
+        duration: Number(s.duration) || 0
     })).filter(t => t.url);
 
     if (tracksToAdd.length === 0) return;

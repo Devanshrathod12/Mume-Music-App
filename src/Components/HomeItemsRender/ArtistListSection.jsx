@@ -24,8 +24,9 @@ const ArtistItem = ({ item, onOpenDetails, theme }) => {
   }, [item.id]);
 
   const getImageUrl = (images) => {
-    if (!images || images.length === 0) return 'https://cdn.pixabay.com/photo/2023/02/16/03/43/music-player-7792956_1280.jpg';
-    return images[images.length - 1]?.url;
+    if (!images || images.length === 0) return 'https://via.placeholder.com/150';
+    if (typeof images === 'string') return images;
+    return images.find(img => img.quality === '500x500')?.url || images[images.length - 1]?.url;
   };
 
   return (

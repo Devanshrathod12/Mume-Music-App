@@ -2,7 +2,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import axios from 'axios';
 
 
-const baseUrl = "https://saavn.sumit.co";
+const baseUrl = "https://saavnapi-nine.vercel.app";
 
 export async function getHeaders() {
 	let token = await AsyncStorage.getItem('user_token');
@@ -39,13 +39,13 @@ export async function apiReq(
 				headers
 			};
 		}
-		console.log("endPointendPoint",`${baseUrl}${endPoint}`)
+		console.log("endPointendPoint", `${baseUrl}${endPoint}`)
 
 		axios[method](`${baseUrl}${endPoint}`, data, { headers })
 			.then(result => {
 				// console.log("api result response",result)
 				const { data } = result;
-				console.log(data,"apitokenchack")
+				console.log(data, "apitokenchack")
 
 				if (data.status === false) {
 					return rej(data);
@@ -53,17 +53,17 @@ export async function apiReq(
 				return res(data);
 			})
 			.catch(error => {
-				console.log(error,"error in api call")
+				console.log(error, "error in api call")
 				// console.log(error && error.response, 'the error respne')
 				if (error && error.response && error.response.status === 401) {
-							//logout user
-							// alert("user not valid")
-							console.log("")
-							
+					//logout user
+					// alert("user not valid")
+					console.log("")
+
 				}
 				if (error && error.response && error.response.data) {
 					if (!error.response.data) {
-						return rej({ ...error.response.data})
+						return rej({ ...error.response.data })
 					}
 					return rej(error.response.data)
 				} else {
@@ -86,6 +86,22 @@ export function apiGet(endPoint, data, headers = {}, requestOptions) {
 }
 
 export function apiPut(endPoint, data, headers = {}) {
-	console.log("header",headers)
+	console.log("header", headers)
 	return apiReq(endPoint, data, 'put', headers);
+}
+
+export const spotifyToken = "Bearer 1POdFZRZbvb...qqillRxMr2z";
+
+export async function spotifyApiGet(url) {
+	try {
+		const response = await axios.get(url, {
+			headers: {
+				'Authorization': spotifyToken
+			}
+		});
+		return response.data;
+	} catch (error) {
+		console.log("Spotify API error", error);
+		throw error;
+	}
 }

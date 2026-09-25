@@ -91,7 +91,7 @@ const ArtistSongList = () => {
                 title: s.name,
                 artist: artistData?.name || "Unknown",
                 artwork: getImageUrl(s.image),
-                duration: s.duration
+                duration: Number(s.duration) || 0
             })).filter(t => t.url);
 
             const clickedIndex = tracksToAdd.findIndex(t => t.id === item.id);
@@ -115,7 +115,7 @@ const ArtistSongList = () => {
         title: s.name,
         artist: artistData?.name || "Unknown",
         artwork: getImageUrl(s.image),
-        duration: s.duration
+        duration: Number(s.duration) || 0
       })).filter(t => t.url);
 
       if(tracksToAdd.length === 0) return;
@@ -139,7 +139,7 @@ const ArtistSongList = () => {
             title: songItem.name,
             artist: artistData?.name || "Unknown",
             artwork: getImageUrl(songItem.image),
-            duration: songItem.duration
+            duration: Number(songItem.duration) || 0
         };
         const currentIndex = await TrackPlayer.getActiveTrackIndex();
         if (currentIndex !== undefined && currentIndex !== null) {

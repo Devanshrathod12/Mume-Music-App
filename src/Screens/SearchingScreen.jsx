@@ -7,6 +7,7 @@ import {
 import Ionicons from '@react-native-vector-icons/ionicons';
 import axios from 'axios';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { MusicApiSearch } from '../Api/MusicApi';
 
 // Theme & Config
 import { useTheme } from '../Context/ThemeContext'; 
@@ -42,12 +43,45 @@ const SearchingScreen = ({ navigation }) => {
         }
 
         try {
-            let endpoint = "https://saavn.sumit.co/api/search/songs";
-            if (tab === "Artists") endpoint = "https://saavn.sumit.co/api/search/artists";
-            if (tab === "Albums") endpoint = "https://saavn.sumit.co/api/search/albums";
-
-            const res = await axios.get(endpoint, { params: { query: query, limit: 20 } });
-            setResults(res.data?.data?.results || []);
+            const data = await MusicApiSearch(query);
+            
+            let mappedData = [];
+            if (tab === "Songs") {
+                mappedData = data;
+            } else if (tab === "Artists") {
+                const artistsMap = new Map();
+                data.forEach(song => {
+                    if (song.artists && song.artists.primary) {
+                        song.artists.primary.forEach(artist => {
+                            if (artist.name && !artistsMap.has(artist.name)) {
+                                artistsMap.set(artist.name, {
+                                    id: artist.id || artist.name,
+                                    name: artist.name,
+                                    image: song.image,
+                                    type: 'artist'
+                                });
+                            }
+                        });
+                    }
+                });
+                mappedData = Array.from(artistsMap.values());
+            } else if (tab === "Albums") {
+                const albumsMap = new Map();
+                data.forEach(song => {
+                    if (song.album && song.album.name && !albumsMap.has(song.album.id)) {
+                        albumsMap.set(song.album.id, {
+                            id: song.album.id,
+                            name: song.album.name,
+                            image: song.image,
+                            artists: song.artists,
+                            type: 'album'
+                        });
+                    }
+                });
+                mappedData = Array.from(albumsMap.values());
+            }
+            
+            setResults(mappedData || []);
         } catch (error) {
             console.log("Search Error:", error);
             setResults([]);
@@ -65,8 +99,10 @@ const SearchingScreen = ({ navigation }) => {
     };
 
     const getImageUrl = (item) => {
-        if (!item?.image || item.image.length === 0) return 'https://via.placeholder.com/150';
-        return item.image[item.image.length - 1]?.url;
+        if (!item?.image) return 'https://via.placeholder.com/150';
+        if (typeof item.image === 'string') return item.image;
+        if (Array.isArray(item.image) && item.image.length > 0) return item.image[item.image.length - 1]?.url;
+        return 'https://via.placeholder.com/150';
     };
 
     const handlePlayPause = async (item) => {
@@ -83,6 +119,7 @@ const SearchingScreen = ({ navigation }) => {
                 title: item.name,
                 artist: item?.artists?.primary?.[0]?.name || "Unknown",
                 artwork: getImageUrl(item),
+                duration: Number(item.duration) || 0
             });
             await TrackPlayer.play();
         }

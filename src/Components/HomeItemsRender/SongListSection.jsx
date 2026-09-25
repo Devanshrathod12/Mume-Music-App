@@ -32,6 +32,7 @@ const SongListSection = ({ data }) => {
   // --- HELPERS ---
   const getImageUrl = (images) => {
     if (!images || images.length === 0) return 'https://via.placeholder.com/150';
+    if (typeof images === 'string') return images;
     return images.find(img => img.quality === '500x500')?.url || images[images.length - 1]?.url;
   };
 
@@ -58,7 +59,7 @@ const SongListSection = ({ data }) => {
                 title: s.name,
                 artist: s?.artists?.primary?.[0]?.name || "Unknown",
                 artwork: getImageUrl(s.image),
-                duration: s.duration
+                duration: Number(s.duration) || 0
             })).filter(t => t.url);
 
             const clickedIndex = tracksToAdd.findIndex(t => t.id === item.id);
@@ -84,7 +85,7 @@ const SongListSection = ({ data }) => {
         title: songItem.name,
         artist: songItem.artists?.primary?.[0]?.name || "Unknown",
         artwork: getImageUrl(songItem.image),
-        duration: songItem.duration
+        duration: Number(songItem.duration) || 0
       };
 
       try {

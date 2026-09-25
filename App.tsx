@@ -14,9 +14,13 @@ const App = () => {
   useEffect(() => {
     const initializePlayer = async () => {
       if (Platform.OS === 'android') {
-        await PermissionsAndroid.request(
-          PermissionsAndroid.PERMISSIONS.WRITE_EXTERNAL_STORAGE, 
-        );
+        const permissions = [
+          PermissionsAndroid.PERMISSIONS.WRITE_EXTERNAL_STORAGE,
+        ];
+        if (Platform.Version >= 33) {
+          permissions.push(PermissionsAndroid.PERMISSIONS.POST_NOTIFICATIONS);
+        }
+        await PermissionsAndroid.requestMultiple(permissions);
       }
       await setupPlayer();
     };
