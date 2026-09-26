@@ -112,16 +112,25 @@ const SearchingScreen = ({ navigation }) => {
         if (activeTrack?.id === item.id) {
             playing ? await TrackPlayer.pause() : await TrackPlayer.play();
         } else {
-            await TrackPlayer.reset();
-            await TrackPlayer.add({
-                id: item.id,
-                url: trackUrl,
-                title: item.name,
-                artist: item?.artists?.primary?.[0]?.name || "Unknown",
-                artwork: getImageUrl(item),
-                duration: Number(item.duration) || 0
-            });
-            await TrackPlayer.play();
+            try {
+                const tracksToAdd = results.map(s => ({
+                    id: s.id,
+                    url: s?.downloadUrl?.[s.downloadUrl.length - 1]?.url,
+                    title: s.name,
+                    artist: s?.artists?.primary?.[0]?.name || "Unknown",
+                    artwork: getImageUrl(s),
+                    duration: Number(s.duration) || 0
+                })).filter(t => t.url);
+
+                const clickedIndex = tracksToAdd.findIndex(t => t.id === item.id);
+
+                await TrackPlayer.reset();
+                await TrackPlayer.add(tracksToAdd);
+                await TrackPlayer.skip(clickedIndex);
+                await TrackPlayer.play();
+            } catch (e) {
+                console.log("Search Player Error:", e);
+            }
         }
     };
 

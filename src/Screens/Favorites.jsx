@@ -34,15 +34,20 @@ const Favorites = () => {
     if (!trackUrl) return;
 
     try {
+      const tracksToAdd = favorites.map(s => ({
+        id: s.id,
+        url: s?.downloadUrl?.[s.downloadUrl.length - 1]?.url,
+        title: s.name,
+        artist: s?.artists?.primary?.[0]?.name || "Unknown",
+        artwork: s?.image?.[s.image.length - 1]?.url || 'https://via.placeholder.com/150',
+        duration: Number(s.duration) || 0
+      })).filter(t => t.url);
+
+      const clickedIndex = tracksToAdd.findIndex(t => t.id === item.id);
+
       await TrackPlayer.reset();
-      await TrackPlayer.add({
-        id: item.id,
-        url: trackUrl,
-        title: item.name,
-        artist: item?.artists?.primary?.[0]?.name || "Unknown",
-        artwork: item?.image?.[item.image.length - 1]?.url || 'https://via.placeholder.com/150',
-        duration: Number(item.duration) || 0
-      });
+      await TrackPlayer.add(tracksToAdd);
+      await TrackPlayer.skip(clickedIndex);
       await TrackPlayer.play();
     } catch (e) {
       console.log("Error playing favorite track:", e);

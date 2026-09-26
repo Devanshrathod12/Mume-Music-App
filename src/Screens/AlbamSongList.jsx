@@ -7,7 +7,8 @@ import React, { useEffect, useState } from 'react'
 import Ionicons from '@react-native-vector-icons/ionicons'
 import { useNavigation, useRoute } from '@react-navigation/native'
 import axios from 'axios'
-import AsyncStorage from '@react-native-async-storage/async-storage'; 
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { MusicApiSearch, normalizeSong } from '../Api/MusicApi'; 
 import TrackPlayer, { useActiveTrack, useIsPlaying } from 'react-native-track-player';
 
 import { useTheme } from '../Context/ThemeContext'
@@ -46,16 +47,19 @@ const AlbamSongList = () => {
 
   // --- API CALL ---
   const fetchSongs = async () => {
-    const artistId = albumData?.artists?.primary?.[0]?.id || albumData?.artists?.all?.[0]?.id;
-
-    if (!artistId) {
-        setLoading(false);
-        return;
-    }
     try {
-        const res = await axios.get(`https://saavn.sumit.co/api/artists/${artistId}/songs`);
-        if (res.data?.data?.songs) {
-            setSongs(res.data.data.songs);
+        if (albumData?.url) {
+            const endpoint = `https://saavnapi-nine.vercel.app/album/?query=${encodeURIComponent(albumData.url)}`;
+            const res = await axios.get(endpoint);
+            if (res.data?.songs && Array.isArray(res.data.songs)) {
+                setSongs(res.data.songs.map(normalizeSong));
+            }
+        } else if (albumData?.name) {
+            const res = await MusicApiSearch(albumData.name);
+            setSongs(res);
+        } else {
+            setLoading(false);
+            return;
         }
     } catch (error) {
         console.log("Error Fetching Album Songs:", error);

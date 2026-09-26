@@ -9,6 +9,7 @@ import { useNavigation, useRoute } from '@react-navigation/native';
 import axios from 'axios';
 import AsyncStorage from '@react-native-async-storage/async-storage'; 
 import TrackPlayer, { useActiveTrack, useIsPlaying } from 'react-native-track-player';
+import { MusicApiSearch } from '../Api/MusicApi';
 
 // Styling & Theme
 import { useTheme } from '../Context/ThemeContext';
@@ -39,9 +40,9 @@ const ArtistSongList = () => {
 
   const fetchSongs = async () => {
     try {
-        const res = await axios.get(`https://saavn.sumit.co/api/artists/${artistData.id}/songs`);
-        if (res.data?.data?.songs) {
-            setSongs(res.data.data.songs);
+        if (artistData?.name) {
+            const res = await MusicApiSearch(artistData.name);
+            setSongs(res);
         }
     } catch (error) {
         console.log("Error Fetching Artist Songs:", error);
@@ -107,9 +108,9 @@ const ArtistSongList = () => {
     }
   };
 
-  const handlePlayAll = async () => {
+  const handlePlayAll = async (isShuffle = false) => {
       if(songs.length === 0) return;
-      const tracksToAdd = songs.map(s => ({
+      let tracksToAdd = songs.map(s => ({
         id: s.id,
         url: getAudioUrl(s),
         title: s.name,
@@ -119,6 +120,10 @@ const ArtistSongList = () => {
       })).filter(t => t.url);
 
       if(tracksToAdd.length === 0) return;
+
+      if (isShuffle) {
+          tracksToAdd = tracksToAdd.sort(() => Math.random() - 0.5);
+      }
 
       try {
         await TrackPlayer.reset();
@@ -199,7 +204,7 @@ const ArtistSongList = () => {
               <View style={styles.actionBtnRow}>
                   <TouchableOpacity 
                     style={[styles.mainBtn, { backgroundColor: theme.Primary }]} 
-                    onPress={handlePlayAll}
+                    onPress={() => handlePlayAll(true)}
                   >
                       <Ionicons name="shuffle" size={20} color="#FFFFFF" />
                       <Text style={styles.btnTxtWhite}>Shuffle</Text>
@@ -207,7 +212,7 @@ const ArtistSongList = () => {
 
                   <TouchableOpacity 
                     style={[styles.mainBtn, { backgroundColor: theme.CardBackground, borderWidth: 1, borderColor: theme.Separator }]} 
-                    onPress={handlePlayAll}
+                    onPress={() => handlePlayAll(false)}
                   >
                       <Ionicons name="play-circle" size={22} color={theme.Primary} />
                       <Text style={[styles.btnTxtOrange, { color: theme.Primary }]}>Play</Text>

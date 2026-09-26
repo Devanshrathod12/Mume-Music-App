@@ -1,7 +1,7 @@
 
 import React, { useState, useEffect, useRef } from 'react';
-import { 
-    StyleSheet, View, ActivityIndicator, TouchableOpacity, Text, StatusBar 
+import {
+    StyleSheet, View, ActivityIndicator, TouchableOpacity, Text, StatusBar
 } from 'react-native';
 import axios from 'axios';
 import { MusicApiSearch } from '../Api/MusicApi';
@@ -19,14 +19,14 @@ import SongListSection from '../Components/HomeItemsRender/SongListSection';
 import AlbamListSection from '../Components/HomeItemsRender/AlbamListSection';
 import ArtistListSection from '../Components/HomeItemsRender/ArtistListSection';
 import SortModal from '../Components/Modal/SortModal';
-
+''
 const Home = () => {
-    const insets = useSafeAreaInsets(); 
+    const insets = useSafeAreaInsets();
     const pagerRef = useRef(null);
     const { theme } = useTheme();
 
     const tabs = ["Suggested", "Songs", "Artists", "Albums"];
-    const [activeIndex, setActiveIndex] = useState(0); 
+    const [activeIndex, setActiveIndex] = useState(0);
 
     const [allData, setAllData] = useState({
         Suggested: { recentlyPlayed: [], artists: [], mostPlayed: [] },
@@ -117,6 +117,7 @@ const Home = () => {
                                 id: song.album.id,
                                 name: song.album.name,
                                 image: song.image,
+                                url: song.album.url,
                                 type: 'album'
                             });
                         }
@@ -126,7 +127,7 @@ const Home = () => {
 
                 setAllData(prev => ({
                     ...prev,
-                    [tabName]: results  
+                    [tabName]: results
                 }));
             }
         } catch (error) {
@@ -149,7 +150,7 @@ const Home = () => {
     const getSortedData = (dataList) => {
         if (!dataList || !Array.isArray(dataList)) return [];
         let list = [...dataList];
-        
+
         if (sortOption === 'Ascending') {
             return list.sort((a, b) => (a.name || "").localeCompare(b.name || ""));
         }
@@ -165,17 +166,17 @@ const Home = () => {
 
     return (
         <View style={[styles.mainContainer, { backgroundColor: theme.WhiteBackground, paddingTop: insets.top }]}>
-            <StatusBar 
-                barStyle={theme.WhiteBackground === '#FFFFFF' ? "dark-content" : "light-content"} 
-                backgroundColor={theme.WhiteBackground} 
+            <StatusBar
+                barStyle={theme.WhiteBackground === '#FFFFFF' ? "dark-content" : "light-content"}
+                backgroundColor={theme.WhiteBackground}
             />
-            
+
             <Header />
 
-            <Tabs 
-                tabs={tabs} 
-                activeTab={currentTabName} 
-                setActiveTab={handleTabPress} 
+            <Tabs
+                tabs={tabs}
+                activeTab={currentTabName}
+                setActiveTab={handleTabPress}
             />
 
             {currentTabName !== 'Suggested' && (
@@ -263,8 +264,8 @@ const styles = StyleSheet.create({
         flex: 1,
     },
     loaderContainer: {
-        flex: 1, 
-        justifyContent: 'center', 
+        flex: 1,
+        justifyContent: 'center',
         alignItems: 'center'
     },
     statsRow: {

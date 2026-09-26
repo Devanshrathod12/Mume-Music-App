@@ -21,10 +21,12 @@ export const normalizeSong = (item) => {
         ],
         album: {
             name: item.album || "Unknown Album",
-            id: item.albumid || ""
+            id: item.albumid || "",
+            url: item.album_url || ""
         },
         duration: Number(item.duration) || 0,
-        type: 'song'
+        type: 'song',
+        perma_url: item.perma_url || ""
     };
 };
 

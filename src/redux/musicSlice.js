@@ -6,6 +6,8 @@ const musicSlice = createSlice({
     favorites: [], 
     playlists: [], 
     recentlyPlayed: [], 
+    queue: [],
+    isShuffle: false,
   },
   reducers: {
 
@@ -48,6 +50,14 @@ const musicSlice = createSlice({
           folder.songs.push(song);
         }
       }
+    },
+    
+    // 4. Queue and Shuffle logic
+    setQueue: (state, action) => {
+      state.queue = action.payload;
+    },
+    toggleShuffle: (state) => {
+      state.isShuffle = !state.isShuffle;
     }
   },
 });
@@ -56,7 +66,9 @@ export const {
     toggleFavorite, 
     addPlaylist, 
     addSongToPlaylist, 
-    addToRecentlyPlayed 
+    addToRecentlyPlayed,
+    setQueue,
+    toggleShuffle
 } = musicSlice.actions;
 
 export default musicSlice.reducer;
