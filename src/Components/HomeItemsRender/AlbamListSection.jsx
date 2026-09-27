@@ -33,14 +33,18 @@ const AlbamListSection = ({ data }) => {
         </TouchableOpacity>
 
         <View style={styles.infoRow}>
-            <View style={styles.gridTextContainer}>
+            <TouchableOpacity 
+                style={styles.gridTextContainer}
+                activeOpacity={0.8}
+                onPress={() => navigation.navigate(NavigationString.AlbamSongList, { albumData: item })}
+            >
                 <Text style={[styles.gridTitle, { color: theme.HeadingColor }]} numberOfLines={1}>
                   {item.name}
                 </Text>
                 <Text style={[styles.gridSub, { color: theme.SecondaryText }]} numberOfLines={1}>
                     {item.language || 'Music'}  •  {item.year || '2023'}
                 </Text>
-            </View>
+            </TouchableOpacity>
             <TouchableOpacity style={styles.gridMenuBtn}>
                 <Ionicons name="ellipsis-vertical" size={18} color={theme.SecondaryText} />
             </TouchableOpacity>

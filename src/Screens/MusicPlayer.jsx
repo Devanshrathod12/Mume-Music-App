@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import {
     StyleSheet, Text, View, Image, TouchableOpacity,
     SafeAreaView, StatusBar, Dimensions
@@ -11,6 +11,7 @@ import TrackPlayer, {
     useProgress
 } from 'react-native-track-player';
 import Slider from '@react-native-community/slider';
+import SongDetailsModal from '../Components/Modal/SongDetailsModal';
 
 // Theme & Config
 import { useTheme } from '../Context/ThemeContext'; // 👈 Theme Access
@@ -25,6 +26,7 @@ const MusicPlayer = () => {
     const activeTrack = useActiveTrack();
     const { playing } = useIsPlaying();
     const { position, duration } = useProgress();
+    const [modalVisible, setModalVisible] = useState(false);
 
     const formatTime = (seconds) => {
         if (!seconds || isNaN(seconds) || seconds < 0) return '00:00';
@@ -75,7 +77,7 @@ const MusicPlayer = () => {
                 <TouchableOpacity onPress={() => navigation.goBack()}>
                     <Ionicons name="chevron-down-outline" size={32} color={theme.Black} />
                 </TouchableOpacity>
-                <TouchableOpacity>
+                <TouchableOpacity onPress={() => setModalVisible(true)}>
                     <Ionicons name="ellipsis-horizontal-circle" size={30} color={theme.Black} />
                 </TouchableOpacity>
             </View>
@@ -164,6 +166,11 @@ const MusicPlayer = () => {
                 </View>
 
             </View>
+            <SongDetailsModal 
+                visible={modalVisible}
+                song={activeTrack}
+                onClose={() => setModalVisible(false)}
+            />
         </SafeAreaView>
     );
 };

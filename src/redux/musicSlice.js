@@ -8,6 +8,7 @@ const musicSlice = createSlice({
     recentlyPlayed: [], 
     queue: [],
     isShuffle: false,
+    recentSearches: [],
   },
   reducers: {
 
@@ -58,6 +59,27 @@ const musicSlice = createSlice({
     },
     toggleShuffle: (state) => {
       state.isShuffle = !state.isShuffle;
+    },
+    
+    // 5. Recent Searches
+    addRecentSearch: (state, action) => {
+      const query = action.payload;
+      if (!state.recentSearches) state.recentSearches = [];
+      
+      if (!state.recentSearches.includes(query)) {
+        state.recentSearches = [query, ...state.recentSearches].slice(0, 10);
+      } else {
+        // Move to top if already exists
+        state.recentSearches = state.recentSearches.filter(q => q !== query);
+        state.recentSearches.unshift(query);
+      }
+    },
+    removeRecentSearch: (state, action) => {
+      if (!state.recentSearches) state.recentSearches = [];
+      state.recentSearches = state.recentSearches.filter(q => q !== action.payload);
+    },
+    clearRecentSearches: (state) => {
+      state.recentSearches = [];
     }
   },
 });
@@ -68,7 +90,10 @@ export const {
     addSongToPlaylist, 
     addToRecentlyPlayed,
     setQueue,
-    toggleShuffle
+    toggleShuffle,
+    addRecentSearch,
+    removeRecentSearch,
+    clearRecentSearches
 } = musicSlice.actions;
 
 export default musicSlice.reducer;

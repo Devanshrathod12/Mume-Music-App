@@ -8,20 +8,20 @@ import { useNavigation } from '@react-navigation/native';
 import { useTheme } from '../../Context/ThemeContext';
 import { scale, verticalScale, moderateScale, textScale } from '../../Styles/StyleConfig';
 import ArtistDetailsModal from '../../Components/Modal/ArtistDetailsModal';
+import { MusicApiSearch } from '../../Api/MusicApi';
 
-const ArtistItem = ({ item, onOpenDetails, theme }) => {
+const ArtistItem = ({ item, onOpenDetails, onNavigate, theme }) => {
   const [songCount, setSongCount] = useState(null);
 
   useEffect(() => {
     const fetchCount = async () => {
       try {
-        const res = await axios.get(`https://saavn.sumit.co/api/artists/${item.id}/songs`);
-        const count = res.data?.data?.songs?.length || 0;
-        setSongCount(count);
+        const res = await MusicApiSearch(item.name);
+        setSongCount(res?.length || 0);
       } catch (e) { setSongCount(0); }
     };
     fetchCount();
-  }, [item.id]);
+  }, [item.name]);
 
   const getImageUrl = (images) => {
     if (!images || images.length === 0) return 'https://via.placeholder.com/150';
@@ -31,7 +31,7 @@ const ArtistItem = ({ item, onOpenDetails, theme }) => {
 
   return (
     <View style={styles.artistRow}>
-      <View style={{ flexDirection: 'row', alignItems: 'center', flex: 1 }}>
+      <TouchableOpacity style={{ flexDirection: 'row', alignItems: 'center', flex: 1 }} onPress={() => onNavigate(item)}>
         <Image 
           source={{ uri: getImageUrl(item.image) }} 
           style={[styles.artistRowImage, { backgroundColor: theme.LightGray }]} 
@@ -42,7 +42,7 @@ const ArtistItem = ({ item, onOpenDetails, theme }) => {
             Artist  |  Songs: {songCount === null ? "..." : songCount}
           </Text>
         </View>
-      </View>
+      </TouchableOpacity>
       <TouchableOpacity 
         style={{ padding: 10 }} 
         onPress={() => onOpenDetails(item)}
@@ -73,12 +73,18 @@ const ArtistListSection = ({ data }) => {
     }
   };
 
+  const navigateToArtist = (item) => {
+    navigation.navigate('ArtistSongList', {
+        artistData: item
+    });
+  };
+
   return (
     <>
       <FlatList
         data={data}
         renderItem={({ item }) => (
-          <ArtistItem item={item} onOpenDetails={openDetails} theme={theme} />
+          <ArtistItem item={item} onOpenDetails={openDetails} onNavigate={navigateToArtist} theme={theme} />
         )}
         keyExtractor={item => item.id.toString()}
         contentContainerStyle={styles.listContent}

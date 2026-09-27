@@ -118,19 +118,22 @@ const SongDetailsModal = ({ visible, onClose, song, onPlayNext }) => {
 
   const handleDownload = async () => {
     try {
-        if (!song.downloadUrl || song.downloadUrl.length === 0) {
+        const downloadLink = (song.downloadUrl && song.downloadUrl.length > 0) 
+                             ? song.downloadUrl[song.downloadUrl.length - 1].url 
+                             : song.url;
+
+        if (!downloadLink) {
             Alert.alert("Error", "Download link not available.");
             return;
         }
 
-        const downloadUrl = song.downloadUrl[song.downloadUrl.length - 1].url;
         const fileName = `${song.id}.mp3`;
         const localPath = `${RNFS.DocumentDirectoryPath}/${fileName}`;
 
         Alert.alert("Download Started", "Check Library later.");
 
         const options = {
-            fromUrl: downloadUrl,
+            fromUrl: downloadLink,
             toFile: localPath,
             background: true,
         };
@@ -189,11 +192,11 @@ const SongDetailsModal = ({ visible, onClose, song, onPlayNext }) => {
           <View style={[styles.dragHandle, { backgroundColor: theme.DragHandle }]} />
           <View style={styles.songHeader}>
             <Image
-              source={{ uri: getImageUrl(song.image) }}
+              source={{ uri: getImageUrl(song.image || song.artwork) }}
               style={[styles.headerImage, { backgroundColor: theme.LightGray }]}
             />
             <View style={styles.headerTextContainer}>
-              <Text style={[styles.songTitle, { color: theme.HeadingColor }]} numberOfLines={1}>{song.name}</Text>
+              <Text style={[styles.songTitle, { color: theme.HeadingColor }]} numberOfLines={1}>{song.name || song.title}</Text>
               <Text style={[styles.songSub, { color: theme.SecondaryText }]} numberOfLines={1}>{getSubtitle()}</Text>
             </View>
             <TouchableOpacity onPress={handleFavoritePress}>

@@ -10,13 +10,15 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { MusicApiSearch } from '../Api/MusicApi';
 
 // Theme & Config
-import { useTheme } from '../Context/ThemeContext'; 
+import { useTheme } from '../Context/ThemeContext';
 import { scale, verticalScale, moderateScale, textScale } from '../Styles/StyleConfig';
 import TrackPlayer, { useActiveTrack, useIsPlaying } from 'react-native-track-player';
+import { useDispatch, useSelector } from 'react-redux';
+import { addRecentSearch, removeRecentSearch, clearRecentSearches } from '../redux/musicSlice';
 
 const SearchingScreen = ({ navigation }) => {
     const insets = useSafeAreaInsets();
-    const { theme } = useTheme(); 
+    const { theme } = useTheme();
     const activeTrack = useActiveTrack();
     const { playing } = useIsPlaying();
 
@@ -26,25 +28,25 @@ const SearchingScreen = ({ navigation }) => {
     const [loading, setLoading] = useState(false);
     const [isSearched, setIsSearched] = useState(false);
 
-    const [recentSearches, setRecentSearches] = useState(['Ariana Grande', 'Drake', 'Memories']);
+    const dispatch = useDispatch();
+    const recentSearches = useSelector(state => state.music.recentSearches) || [];
+
     const [results, setResults] = useState([]);
 
     const tabs = ["Songs", "Artists", "Albums"];
 
     const handleSearch = async (query, tab = activeTab) => {
         if (!query.trim()) return;
-        
+
         setLoading(true);
         setSearchQuery(query);
         setIsSearched(true);
-        
-        if (!recentSearches.includes(query)) {
-            setRecentSearches(prev => [query, ...prev].slice(0, 10));
-        }
+
+        dispatch(addRecentSearch(query));
 
         try {
             const data = await MusicApiSearch(query);
-            
+
             let mappedData = [];
             if (tab === "Songs") {
                 mappedData = data;
@@ -80,7 +82,7 @@ const SearchingScreen = ({ navigation }) => {
                 });
                 mappedData = Array.from(albumsMap.values());
             }
-            
+
             setResults(mappedData || []);
         } catch (error) {
             console.log("Search Error:", error);
@@ -138,7 +140,7 @@ const SearchingScreen = ({ navigation }) => {
         <View style={styles.sectionContainer}>
             <View style={styles.recentHeader}>
                 <Text style={[styles.sectionTitle, { color: theme.HeadingColor }]}>Recent Searches</Text>
-                <TouchableOpacity onPress={() => setRecentSearches([])}>
+                <TouchableOpacity onPress={() => dispatch(clearRecentSearches())}>
                     <Text style={[styles.clearAllText, { color: theme.Primary }]}>Clear All</Text>
                 </TouchableOpacity>
             </View>
@@ -146,10 +148,14 @@ const SearchingScreen = ({ navigation }) => {
                 data={recentSearches}
                 keyExtractor={(item, index) => index.toString()}
                 renderItem={({ item }) => (
-                    <TouchableOpacity style={styles.recentItem} onPress={() => {setSearchInput(item); handleSearch(item)}}>
-                        <Text style={[styles.recentItemText, { color: theme.SecondaryText }]}>{item}</Text>
-                        <Ionicons name="close-outline" size={20} color={theme.SecondaryText} />
-                    </TouchableOpacity>
+                    <View style={styles.recentItem}>
+                        <TouchableOpacity style={{ flex: 1 }} onPress={() => { setSearchInput(item); handleSearch(item) }}>
+                            <Text style={[styles.recentItemText, { color: theme.SecondaryText }]}>{item}</Text>
+                        </TouchableOpacity>
+                        <TouchableOpacity style={{ paddingHorizontal: 5 }} onPress={() => dispatch(removeRecentSearch(item))}>
+                            <Ionicons name="close-outline" size={20} color={theme.SecondaryText} />
+                        </TouchableOpacity>
+                    </View>
                 )}
             />
         </View>
@@ -157,47 +163,60 @@ const SearchingScreen = ({ navigation }) => {
 
     const renderResultItem = ({ item }) => {
         const isActive = activeTrack?.id === item.id;
+
+        const handleItemPress = () => {
+            if (activeTab === "Artists") {
+                navigation.navigate('ArtistSongList', { artistData: item });
+            } else if (activeTab === "Albums") {
+                navigation.navigate('AlbamSongList', { albumData: item });
+            } else {
+                handlePlayPause(item);
+            }
+        };
+
         return (
-            <View style={styles.songRow}>
+            <TouchableOpacity style={styles.songRow} onPress={handleItemPress} activeOpacity={0.7}>
                 <Image source={{ uri: getImageUrl(item) }} style={[styles.itemImage, activeTab === "Artists" && { borderRadius: 50 }, { backgroundColor: theme.LightGray }]} />
                 <View style={styles.itemInfo}>
                     <Text style={[styles.itemTitle, { color: isActive ? theme.Primary : theme.HeadingColor }]} numberOfLines={1}>{item.name}</Text>
                     <Text style={[styles.itemSubtitle, { color: theme.SecondaryText }]}>{activeTab === "Artists" ? "Artist" : item?.artists?.primary?.[0]?.name || "Unknown"}</Text>
                 </View>
                 {activeTab === "Songs" && (
-                    <TouchableOpacity onPress={() => handlePlayPause(item)}>
-                        <Ionicons 
-                            name={isActive && playing ? "pause-circle" : "play-circle"} 
-                            size={moderateScale(35)} 
-                            color={theme.Primary} 
+                    <View>
+                        <Ionicons
+                            name={isActive && playing ? "pause-circle" : "play-circle"}
+                            size={moderateScale(35)}
+                            color={theme.Primary}
                         />
-                    </TouchableOpacity>
+                    </View>
                 )}
-                <Ionicons name="ellipsis-vertical" size={20} color={theme.SecondaryText} style={{ marginLeft: scale(10) }} />
-            </View>
+                <TouchableOpacity onPress={() => { }}>
+                    <Ionicons name="ellipsis-vertical" size={20} color={theme.SecondaryText} style={{ marginLeft: scale(10) }} />
+                </TouchableOpacity>
+            </TouchableOpacity>
         );
     };
 
     return (
         <View style={[styles.container, { backgroundColor: theme.WhiteBackground, paddingTop: insets.top }]}>
             <StatusBar barStyle={theme.WhiteBackground === '#FFFFFF' ? "dark-content" : "light-content"} backgroundColor={theme.WhiteBackground} />
-            
+
             <View style={styles.header}>
                 <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backBtn}>
                     <Ionicons name="arrow-back-outline" size={24} color={theme.Black} />
                 </TouchableOpacity>
 
                 <View style={[
-                    styles.inputContainer, 
-                    isSearched 
-                        ? { backgroundColor: theme.WhiteBackground === '#FFFFFF' ? '#FFF5F0' : theme.CardBackground, borderWidth: 0 } 
+                    styles.inputContainer,
+                    isSearched
+                        ? { backgroundColor: theme.WhiteBackground === '#FFFFFF' ? '#FFF5F0' : theme.CardBackground, borderWidth: 0 }
                         : { backgroundColor: theme.MainBackground, borderWidth: 1, borderColor: theme.Primary }
                 ]}>
-                    <Ionicons 
-                        name="search" 
-                        size={18} 
-                        color={isSearched ? theme.SecondaryText : theme.Primary} 
-                        style={{ marginRight: 8 }} 
+                    <Ionicons
+                        name="search"
+                        size={18}
+                        color={isSearched ? theme.SecondaryText : theme.Primary}
+                        style={{ marginRight: 8 }}
                     />
                     <TextInput
                         placeholder="Search songs, artists..."
@@ -206,7 +225,7 @@ const SearchingScreen = ({ navigation }) => {
                         value={searchInput}
                         onChangeText={(text) => {
                             setSearchInput(text);
-                            if(text === "") setIsSearched(false);
+                            if (text === "") setIsSearched(false);
                         }}
                         onSubmitEditing={() => handleSearch(searchInput)}
                         returnKeyType="search"
@@ -228,14 +247,14 @@ const SearchingScreen = ({ navigation }) => {
                             <TouchableOpacity
                                 key={tab}
                                 style={[
-                                    styles.tabBtn, 
+                                    styles.tabBtn,
                                     { borderColor: theme.Primary },
                                     activeTab === tab && { backgroundColor: theme.Primary }
                                 ]}
                                 onPress={() => { setActiveTab(tab); handleSearch(searchQuery, tab); }}
                             >
                                 <Text style={[
-                                    styles.tabText, 
+                                    styles.tabText,
                                     { color: activeTab === tab ? '#FFF' : theme.Primary }
                                 ]}>{tab}</Text>
                             </TouchableOpacity>
@@ -254,10 +273,10 @@ const SearchingScreen = ({ navigation }) => {
                         />
                     ) : (
                         <View style={styles.notFoundContainer}>
-                             <View style={[styles.sadFaceCircle, { backgroundColor: theme.Primary }]}>
+                            <View style={[styles.sadFaceCircle, { backgroundColor: theme.Primary }]}>
                                 <View style={styles.eyesRow}><View style={styles.eye} /><View style={styles.eye} /></View>
                                 <View style={styles.sadMouth} />
-                             </View>
+                            </View>
                             <Text style={[styles.notFoundTitle, { color: theme.HeadingColor }]}>Not Found</Text>
                             <Text style={[styles.notFoundSub, { color: theme.SecondaryText }]}>Sorry, the keyword you entered cannot be found, please search with another keyword.</Text>
                         </View>
@@ -310,9 +329,9 @@ const styles = StyleSheet.create({
     itemTitle: { fontSize: textScale(16), fontWeight: 'bold' },
     itemSubtitle: { fontSize: textScale(13), marginTop: 4 },
     notFoundContainer: { flex: 1, alignItems: 'center', paddingHorizontal: 40, marginTop: verticalScale(80) },
-    sadFaceCircle: { 
-        width: 150, height: 150, borderRadius: 75, 
-        justifyContent: 'center', alignItems: 'center', marginBottom: 30 
+    sadFaceCircle: {
+        width: 150, height: 150, borderRadius: 75,
+        justifyContent: 'center', alignItems: 'center', marginBottom: 30
     },
     eyesRow: { flexDirection: 'row', justifyContent: 'space-around', width: '50%', marginBottom: 15 },
     eye: { width: 15, height: 10, borderRadius: 5, backgroundColor: '#1F2937' },

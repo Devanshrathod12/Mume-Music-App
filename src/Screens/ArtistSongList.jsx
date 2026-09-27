@@ -62,10 +62,11 @@ const ArtistSongList = () => {
 
   const getImageUrl = (images) => {
     if (!images || images.length === 0) return 'https://via.placeholder.com/300';
+    if (typeof images === 'string') return images;
     const imgObj = Array.isArray(images) 
         ? (images.find(img => img.quality === '500x500') || images[images.length - 1])
         : images;
-    return imgObj?.url || images;
+    return imgObj?.url || 'https://via.placeholder.com/300';
   };
 
   const getAudioUrl = (item) => item?.downloadUrl?.[item.downloadUrl.length - 1]?.url;
@@ -175,7 +176,7 @@ const ArtistSongList = () => {
             {artistData?.name}
         </Text>
         <View style={styles.headerRight}>
-             <TouchableOpacity>
+             <TouchableOpacity onPress={() => navigation.navigate('SearchingScreen')}>
                 <Ionicons name="search-outline" size={24} color={theme.Black} />
              </TouchableOpacity>
         </View>

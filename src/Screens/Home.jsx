@@ -85,11 +85,28 @@ const Home = () => {
                     }
                 }));
             } else {
-                let query = "latest";
-                if (tabName === 'Albums') query = "trending albums";
-                if (tabName === 'Artists') query = "latest artists";
+                let data = [];
+                let queries = [];
+                
+                if (tabName === 'Songs') {
+                    queries = ["latest", "bollywood", "hollywood", "hindi", "punjabi", "lofi", "pop", "romance", "party"];
+                } else if (tabName === 'Albums') {
+                    queries = ["trending albums", "bollywood albums", "hindi albums", "new albums"];
+                } else if (tabName === 'Artists') {
+                    queries = ["latest artists", "bollywood artists", "hollywood artists", "popular artists"];
+                }
 
-                const data = await MusicApiSearch(query);
+                const promises = queries.map(q => MusicApiSearch(q));
+                const responses = await Promise.allSettled(promises);
+                
+                responses.forEach(res => {
+                    if (res.status === 'fulfilled' && res.value) {
+                        data = [...data, ...res.value];
+                    }
+                });
+
+                // Filter out duplicates
+                data = Array.from(new Map(data.filter(i => i && i.id).map(item => [item.id, item])).values());
 
                 let results = data;
                 if (tabName === 'Artists') {
